@@ -27,6 +27,7 @@ channels:
   telegram:
     enabled: true
     bot_token: ${TELEGRAM_BOT_TOKEN}
+    groupPolicy: open
 
 integrations:
   github:
