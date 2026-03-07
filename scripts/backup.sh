@@ -34,7 +34,7 @@ trap "rm -rf $TEMP_DIR" EXIT
 
 info "Exporting openclaw_data volume..."
 docker run --rm \
-    -v AppFactory_openclaw_data:/source:ro \
+    -v appfactory_openclaw_data:/source:ro \
     -v "$TEMP_DIR":/backup \
     alpine tar czf /backup/openclaw_data.tar.gz -C /source . 2>/dev/null || {
     info "No openclaw_data volume found (first run?). Skipping."
@@ -42,7 +42,7 @@ docker run --rm \
 
 info "Exporting openclaw_workspace volume..."
 docker run --rm \
-    -v AppFactory_openclaw_workspace:/source:ro \
+    -v appfactory_openclaw_workspace:/source:ro \
     -v "$TEMP_DIR":/backup \
     alpine tar czf /backup/openclaw_workspace.tar.gz -C /source . 2>/dev/null || {
     info "No openclaw_workspace volume found. Skipping."
