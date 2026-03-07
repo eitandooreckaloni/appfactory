@@ -1,7 +1,6 @@
 gateway:
   port: 18789
   host: 0.0.0.0
-  agent_model: anthropic/claude-sonnet-4-20250514
   auth:
     token: ${OPENCLAW_AUTH_TOKEN}
 
