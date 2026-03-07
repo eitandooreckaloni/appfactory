@@ -21,7 +21,7 @@ services:
     expose:
       - "18789"
     volumes:
-      - ./openclaw/skills:/app/skills:ro
+      - ./openclaw/skills:/app/skills
       - openclaw_data:/home/node/.openclaw
       - openclaw_workspace:/app/workspace
     environment:
