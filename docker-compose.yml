@@ -16,7 +16,7 @@ services:
       - openclaw
 
   openclaw:
-    image: openclaw/openclaw:latest
+    image: ghcr.io/openclaw/openclaw:latest
     restart: unless-stopped
     expose:
       - "3000"
