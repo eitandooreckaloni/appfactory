@@ -103,7 +103,7 @@ When dispatching to a sub-agent:
 4. Save to `workspace/appfactory/designs/design-<N>.json`.
 5. Set status to `designed`.
 
-### `approve <N>` Pipeline (auto-chains build → develop → QA)
+### `approve <N>` Pipeline (auto-chains build → develop → QA, with retry)
 
 1. Validate idea #N has status `designed` (must have a design spec at `designs/design-<N>.json`).
 2. Set status to `building`.
@@ -116,7 +116,13 @@ When dispatching to a sub-agent:
 9. On failure: keep status as `built`, report the error, suggest `develop <N>` to retry. STOP.
 10. **QA** (`agents/qa/`): Send idea + spec + developer output. Receive QA output.
 11. On pass: set status to `qa_pass`, store `qa_output`.
-12. On fail: set status to `qa_fail`, store `qa_output`, report issues. STOP.
+12. On fail: **auto-retry up to 2 times** before giving up:
+    a. Report the QA issues to the user (e.g., "QA failed (attempt 1/3). Retrying...").
+    b. Set status back to `built`.
+    c. Re-dispatch **Developer** with the same inputs PLUS the `qa_output` from the failed QA run. The Developer will use the QA issues to target fixes.
+    d. On Developer success: set status to `developed`, store updated `developer_output`.
+    e. Re-dispatch **QA**. If QA passes, set `qa_pass` and continue. If QA fails again, repeat from (a) up to the retry limit.
+    f. After 3 total QA attempts (1 initial + 2 retries), if still failing: set status to `qa_fail`, store `qa_output`, report issues. STOP.
 
 ### `deploy <N>` Pipeline
 
@@ -172,14 +178,21 @@ Design spec ready for #N: <name>. Run `approve <N>` to build it.
 ```
 Plus a 1-line summary of the design direction (e.g., primary color, font, layout pattern).
 
-After `approve <N>` (auto-chains build → develop → QA):
+After `approve <N>` (auto-chains build → develop → QA, with retry):
 ```
 Building #N: <name>...
 Scaffolded. Implementing...
 Implemented. Running QA...
 QA passed. Run `deploy <N>` to go live.
 ```
-Or if QA fails: "QA failed for #N: <issues summary>. Run `develop <N>` to fix and retry."
+If QA fails but retries remain:
+```
+QA failed (attempt 1/3). Issues: <summary>. Retrying...
+Re-implementing fixes...
+Running QA again...
+```
+If QA passes on retry: "QA passed on attempt 2/3. Run `deploy <N>` to go live."
+If all 3 attempts fail: "QA failed after 3 attempts for #N: <issues summary>. Run `develop <N>` to fix manually."
 
 After `develop <N>`:
 ```

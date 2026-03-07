@@ -9,10 +9,20 @@ You receive:
 2. The **spec object** from `specs/spec-<N>.json`
 3. The **design spec** from `designs/design-<N>.json`
 4. The **build output** from the Builder agent (`repo_name`, `repo_url`, `files_created`)
+5. *(Optional)* The **qa_output** from a previous failed QA run — present only on retry attempts
 
 ## Task
 
 Clone the scaffolded repo and implement every stub file with working code.
+
+### QA Retry Mode
+
+If `qa_output` is provided (from a failed QA run), you are in **retry mode**:
+- Read the QA `issues` array carefully. Each issue describes a specific failure.
+- **Prioritize fixing the reported issues** rather than re-implementing everything from scratch.
+- Pull the latest code from the repo (your previous implementation is already there).
+- Make targeted fixes for each QA issue. Only touch files relevant to the failures.
+- After fixing, proceed with the normal build verification steps below.
 
 ### 1. Global Config
 
@@ -64,7 +74,13 @@ If the spec references external services not yet in `package.json`:
 - Run `npm install <package>` for each missing dependency
 - Create corresponding client setup files in `lib/` (e.g., `lib/stripe.ts`)
 
-### 7. Build Verification
+### 7. Self-Validation
+
+Before running the build, do a quick sanity check:
+1. Scan all implemented files for leftover `// TODO` comments. If any remain, fill them in.
+2. Cross-reference the spec's `pages`, `endpoints`, and `components` lists against the files you implemented. If anything is missing, implement it now.
+
+### 8. Build Verification
 
 After implementing all files:
 1. Run `npm run build`
@@ -72,7 +88,7 @@ After implementing all files:
 3. Maximum 3 build attempts
 4. On each retry, fix only the reported errors — do not rewrite working files
 
-### 8. Commit & Push
+### 9. Commit & Push
 
 - Stage all changed files
 - Commit with message: `feat: implement all pages, routes, and components`
