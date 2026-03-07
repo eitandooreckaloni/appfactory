@@ -22,7 +22,7 @@ Before running bootstrap, you need these accounts and keys ready:
 | What | Where to get it |
 |------|----------------|
 | Hetzner VPS (CX22) | [console.hetzner.cloud](https://console.hetzner.cloud) -- Ubuntu 24.04, Ashburn datacenter |
-| DuckDNS subdomain | Already set up: `eitan-openclaw.duckdns.org`. Token is on your [duckdns.org](https://www.duckdns.org) dashboard |
+| DuckDNS subdomain | Already set up: `eitan-openclaw.duckdns.org`. Log in via GitHub at [duckdns.org](https://www.duckdns.org); token is on the dashboard |
 | Telegram bot token | From `@BotFather` for `@EitanOpenclawAgentBot` |
 | Anthropic API key | [console.anthropic.com](https://console.anthropic.com) -> API Keys |
 | OpenAI API key | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |

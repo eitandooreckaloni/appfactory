@@ -168,7 +168,7 @@ prompt_secret ANTHROPIC_API_KEY "Anthropic Claude API key (from console.anthropi
 prompt_secret OPENAI_API_KEY    "OpenAI API key (from platform.openai.com/api-keys)"
 prompt_secret TELEGRAM_BOT_TOKEN "Telegram bot token (from @BotFather for @EitanOpenclawAgentBot)"
 prompt_secret GITHUB_TOKEN      "GitHub PAT with repo scope (from github.com/settings/tokens)"
-prompt_secret DUCKDNS_TOKEN     "DuckDNS token (from duckdns.org dashboard)"
+prompt_secret DUCKDNS_TOKEN     "DuckDNS token (log in via GitHub at duckdns.org, token on dashboard)"
 
 ok "All secrets collected."
 
