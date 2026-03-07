@@ -25,8 +25,7 @@ services:
       - openclaw_data:/home/node/.openclaw
       - openclaw_workspace:/app/workspace
     environment:
-      - OPENCLAW_HOST=0.0.0.0
-      - OPENCLAW_PORT=18789
+      - OPENCLAW_GATEWAY_BIND=lan
     env_file:
       - .env
 
