@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QA Output",
+  "type": "object",
+  "required": ["idea_id", "verdict", "build_ok", "lint_ok", "issues", "coverage", "summary"],
+  "properties": {
+    "idea_id": { "type": "integer" },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail"]
+    },
+    "build_ok": { "type": "boolean" },
+    "lint_ok": { "type": "boolean" },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "file", "description"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["error", "warning"] },
+          "file": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["pages_found", "pages_expected", "endpoints_found", "endpoints_expected", "components_found", "components_expected"],
+      "properties": {
+        "pages_found": { "type": "integer" },
+        "pages_expected": { "type": "integer" },
+        "endpoints_found": { "type": "integer" },
+        "endpoints_expected": { "type": "integer" },
+        "components_found": { "type": "integer" },
+        "components_expected": { "type": "integer" }
+      }
+    },
+    "summary": { "type": "string" }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Deploy Output",
+  "type": "object",
+  "required": ["idea_id", "repo_url", "live_url", "deployment_status", "smoke_test", "needs_supabase", "pending_steps"],
+  "properties": {
+    "idea_id": { "type": "integer" },
+    "repo_url": { "type": "string", "format": "uri" },
+    "live_url": { "type": "string", "format": "uri" },
+    "vercel_project_id": { "type": "string" },
+    "deployment_status": {
+      "type": "string",
+      "enum": ["live", "failed"]
+    },
+    "smoke_test": {
+      "type": "string",
+      "enum": ["pass", "fail"]
+    },
+    "needs_supabase": { "type": "boolean" },
+    "pending_steps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

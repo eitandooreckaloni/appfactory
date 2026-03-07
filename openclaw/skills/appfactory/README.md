@@ -1,6 +1,6 @@
 # AppFactory Skill
 
-An idea-to-spec pipeline for shipping small apps fast. Talk to it via Telegram through OpenClaw.
+An autonomous idea-to-deployment pipeline for shipping small apps fast. Talk to it via Telegram through OpenClaw.
 
 ## Architecture
 
@@ -15,8 +15,13 @@ OpenClaw  -->  AppFactory Router (SKILL.md)
                    |-- refine N ------> Scout (refine) --> Ranker (auto-filter)
                    |-- rank ----------> Ranker Agent   --> JSON scores
                    |-- spec N --------> PM Agent       --> JSON spec
-                   |-- approve N -----> Builder Agent  --> GitHub repo scaffold
-                   |-- build N -------> Builder Agent  --> GitHub repo scaffold (retry)
+                   |-- design N ------> Designer Agent --> JSON design spec
+                   |-- approve N -----> Builder --> Developer --> QA (auto-chain)
+                   |-- build N -------> Builder Agent  --> GitHub repo scaffold
+                   |-- develop N -----> Developer Agent --> implemented code
+                   |-- qa N ----------> QA Agent       --> pass/fail verdict
+                   |-- deploy N ------> Deployer Agent --> Vercel live URL
+                   |-- auto [topic] --> full pipeline (ideas → spec → design → build → develop → qa → deploy)
                    |-- kill N --------> (router handles directly)
                    |
                    v
@@ -33,19 +38,41 @@ ideas <topic>      Same as above, focused on a topic
 refine <N> "text"  Iterate on idea #N with feedback, auto-validate
 rank               Manually re-rank all active ideas
 spec <number>      PM writes a full build spec for idea #N
-approve <number>   Approve idea #N, then Builder scaffolds & pushes to GitHub
+design <number>    Designer creates a design system for idea #N
+approve <number>   Approve #N, then auto-chain: scaffold → implement → QA
 build <number>     Manually (re-)trigger Builder for idea #N
+develop <number>   Manually (re-)trigger Developer for idea #N
+qa <number>        Manually (re-)trigger QA for idea #N
+deploy <number>    Deploy idea #N to Vercel
+auto               Full autonomous pipeline: ideas → spec → design → build → develop → qa → deploy
+auto <topic>       Same as auto, focused on a topic
 kill <number>      Router removes idea #N
 ```
 
 ## Workflow
 
 ```
-ideas  -->  [auto: research -> generate -> rank -> filter]  -->  spec  -->  approve  -->  Builder
-                                                      |           |                        |
-                                                      v           v                        v
-                                               refine/kill      kill                [ready for /develop]
+                                   auto (runs everything below)
+                                          |
+ideas  -->  [research → generate → rank → filter]  -->  spec  -->  design  -->  approve  -->  deploy
+                                              |           |          |             |             |
+                                              v           v          v             v             v
+                                       refine/kill      kill       kill    [build→develop→qa]  LIVE
 ```
+
+## Pipeline Agents
+
+| Agent | Role | Input | Output |
+|-------|------|-------|--------|
+| **Researcher** | Web search for market signals | Topic or broad query | Research brief (trends, pain points, gaps) |
+| **Scout** | Generate app ideas | User context + research brief | 5 idea objects (or 1 in refine mode) |
+| **Ranker** | Score and rank ideas | Active ideas | Weighted scores + recommendations |
+| **PM** | Write detailed build spec | Single idea object | Full spec (pages, components, API, DB schema) |
+| **Designer** | Create design system | PM spec | Design spec (colors, typography, components, motion) |
+| **Builder** | Scaffold Next.js project | Idea + spec + design | GitHub repo with stub files |
+| **Developer** | Implement all code | Idea + spec + design + scaffold | Working app with all TODOs filled in |
+| **QA** | Validate the build | Idea + spec + developer output | Pass/fail verdict with issues list |
+| **Deployer** | Deploy to Vercel + Supabase | Idea + spec + QA output | Live URL |
 
 ## Data Flow
 
@@ -53,9 +80,14 @@ ideas  -->  [auto: research -> generate -> rank -> filter]  -->  spec  -->  appr
 2. **refine N "feedback"** -- Router sends idea #N + feedback + cached research to Scout in refinement mode. Scout returns 1 refined idea. Original is marked `superseded`. Refined idea is auto-ranked and filtered.
 3. **rank** -- Router sends active ideas to Ranker. Ranker returns scores. Router merges `ranking` into each idea in `pipeline.json`.
 4. **spec N** -- Router sends idea #N to PM. PM returns full spec. Router saves to `specs/spec-N.json`, sets status to `specced`.
-5. **approve N** -- Router validates idea is `specced`, sets status to `building`, dispatches to Builder with idea + spec. Builder scaffolds a Next.js project and pushes to GitHub. Router stores `repo_url` and sets status to `built`.
-6. **build N** -- Manual re-trigger of the Builder for ideas with status `approved` or `building` (e.g., if auto-build failed).
-7. **kill N** -- Router sets status to `killed` in `pipeline.json`. No sub-agent needed.
+5. **design N** -- Router sends the spec to Designer. Designer returns a design system. Router saves to `designs/design-N.json`, sets status to `designed`.
+6. **approve N** -- Router validates idea is `designed`, then auto-chains three agents: Builder scaffolds the repo, Developer implements all stubs, QA validates the result. Status progresses: `building` → `built` → `developed` → `qa_pass` (or `qa_fail`).
+7. **build N** -- Manual re-trigger of Builder (e.g., if auto-build failed).
+8. **develop N** -- Manual re-trigger of Developer (e.g., if implementation had issues).
+9. **qa N** -- Manual re-trigger of QA.
+10. **deploy N** -- Router sends the QA-validated app to Deployer. Deployer creates a Vercel project, sets env vars, deploys, provisions Supabase, and runs a smoke test. Status becomes `deployed` with a `live_url`.
+11. **auto [topic]** -- Runs the entire pipeline autonomously: ideas → pick top → spec → design → approve (build → develop → QA) → deploy. Reports progress at each step. Stops on any failure.
+12. **kill N** -- Router sets status to `killed` in `pipeline.json`. No sub-agent needed.
 
 ## File Structure
 
@@ -71,13 +103,25 @@ appfactory/
 │   │   └── SKILL.md              # Scoring and ranking agent
 │   ├── pm/
 │   │   └── SKILL.md              # Spec writing agent
-│   └── builder/
-│       └── SKILL.md              # Project scaffolding agent
+│   ├── designer/
+│   │   └── SKILL.md              # Design system agent
+│   ├── builder/
+│   │   └── SKILL.md              # Project scaffolding agent
+│   ├── developer/
+│   │   └── SKILL.md              # Code implementation agent
+│   ├── qa/
+│   │   └── SKILL.md              # Build validation agent
+│   └── deployer/
+│       └── SKILL.md              # Vercel deployment agent
 ├── schemas/
 │   ├── idea.schema.json          # JSON schema for idea output
+│   ├── research.schema.json      # JSON schema for research brief
 │   ├── spec.schema.json          # JSON schema for spec output
+│   ├── design.schema.json        # JSON schema for design spec
 │   ├── build.schema.json         # JSON schema for builder output
-│   └── research.schema.json      # JSON schema for research brief
+│   ├── develop.schema.json       # JSON schema for developer output
+│   ├── qa.schema.json            # JSON schema for QA output
+│   └── deploy.schema.json        # JSON schema for deployer output
 ├── prompts/
 │   ├── system.md                 # Shared principles (referenced by sub-agents)
 │   ├── ideate.md                 # Supplementary ideation guidance
@@ -97,34 +141,43 @@ All pipeline state lives in `workspace/appfactory/pipeline.json`:
   "ideas": [
     {
       "id": 1,
-      "status": "active",
+      "status": "deployed",
       "name": "SnapInvoice",
       "one_liner": "Photo-to-invoice in 10 seconds",
       "confidence": { "score": 7, "justification": "..." },
       "ranking": { "weighted_score": 7.15, "pain": 9, "..." : "..." },
-      "research_grounding": ["HN complaints about slow invoicing", "freelancer pain points on Reddit"]
-    },
-    {
-      "id": 5,
-      "status": "filtered",
-      "name": "LowScoreApp",
-      "ranking": { "weighted_score": 3.8, "..." : "..." }
-    },
-    {
-      "id": 7,
-      "status": "active",
-      "name": "SnapInvoice Pro",
-      "refined_from": 1,
-      "refinement_feedback": "focus on contractors not freelancers",
-      "ranking": { "weighted_score": 7.9, "..." : "..." }
+      "research_grounding": ["HN complaints about slow invoicing"],
+      "repo_url": "https://github.com/owner/snap-invoice",
+      "developer_output": { "build_status": "pass", "files_implemented": ["..."] },
+      "qa_output": { "verdict": "pass", "summary": "All checks passed." },
+      "live_url": "https://snap-invoice.vercel.app"
     }
   ]
 }
 ```
 
-Additional state files:
-- `workspace/appfactory/specs/spec-<N>.json` -- Approved specs
+### Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `active` | Idea passed ranking filter, ready for spec |
+| `filtered` | Scored below 5.0, hidden from user |
+| `superseded` | Replaced by a refined version |
+| `specced` | PM has written a build spec |
+| `designed` | Designer has created a design system |
+| `building` | Builder is scaffolding the repo |
+| `built` | Scaffold pushed to GitHub |
+| `developed` | Developer has implemented all code |
+| `qa_pass` | QA validated, ready to deploy |
+| `qa_fail` | QA found issues, needs fixing |
+| `deployed` | Live on Vercel |
+| `killed` | Manually removed by user |
+
+### Additional State Files
+
 - `workspace/appfactory/research.json` -- Most recent research brief (cached for `refine`)
+- `workspace/appfactory/specs/spec-<N>.json` -- PM specs
+- `workspace/appfactory/designs/design-<N>.json` -- Design specs
 
 ## Why Sub-Agents?
 

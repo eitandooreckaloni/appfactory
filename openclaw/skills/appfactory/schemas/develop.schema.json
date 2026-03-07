@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Developer Output",
+  "type": "object",
+  "required": ["repo_name", "repo_url", "files_implemented", "build_status"],
+  "properties": {
+    "repo_name": { "type": "string" },
+    "repo_url": { "type": "string", "format": "uri" },
+    "files_implemented": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "build_status": {
+      "type": "string",
+      "enum": ["pass", "fail"]
+    },
+    "build_errors": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
