@@ -84,8 +84,25 @@
     },
     "status": {
       "type": "string",
-      "enum": ["active", "specced", "approved", "killed"],
+      "enum": ["active", "filtered", "specced", "approved", "building", "built", "killed", "superseded"],
       "description": "Current pipeline status"
+    },
+    "refined_from": {
+      "type": "integer",
+      "description": "ID of the idea this was refined from, if any"
+    },
+    "refinement_feedback": {
+      "type": "string",
+      "description": "User feedback that prompted the refinement"
+    },
+    "research_grounding": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Key research signals that informed this idea"
+    },
+    "repo_url": {
+      "type": "string",
+      "description": "GitHub repo URL, set after Builder scaffolds the project"
     },
     "ranking": {
       "type": "object",

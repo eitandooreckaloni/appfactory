@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Brief",
+  "description": "Structured research output from the Researcher agent",
+  "type": "object",
+  "required": ["trends", "pain_points", "gaps", "recent_launches"],
+  "properties": {
+    "trends": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["trend", "evidence"],
+        "properties": {
+          "trend": { "type": "string" },
+          "evidence": { "type": "string" },
+          "source_url": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pain_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["problem", "who", "where_seen"],
+        "properties": {
+          "problem": { "type": "string" },
+          "who": { "type": "string" },
+          "where_seen": { "type": "string" },
+          "source_url": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gap", "existing_solutions", "why_insufficient"],
+        "properties": {
+          "gap": { "type": "string" },
+          "existing_solutions": { "type": "string" },
+          "why_insufficient": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "recent_launches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "what", "traction_signal"],
+        "properties": {
+          "name": { "type": "string" },
+          "what": { "type": "string" },
+          "traction_signal": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "staleness_warning": {
+      "type": "boolean",
+      "description": "True if research was generated from training data instead of live search"
+    }
+  },
+  "additionalProperties": false
+}
