@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AppFactory Idea",
+  "description": "Schema for a single app idea produced by the AppFactory pipeline",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "one_liner",
+    "user_problem",
+    "why_now",
+    "mvp_scope",
+    "viral_loop",
+    "stack",
+    "build_time",
+    "confidence",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Sequential idea number, never reused"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 40,
+      "description": "Short, memorable product name"
+    },
+    "one_liner": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "What it does in one sentence"
+    },
+    "user_problem": {
+      "type": "string",
+      "description": "Who uses it and what pain it solves"
+    },
+    "why_now": {
+      "type": "string",
+      "description": "Trend, API, or moment that makes this timely"
+    },
+    "mvp_scope": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "maxItems": 3,
+      "description": "Features included in v1"
+    },
+    "viral_loop": {
+      "type": "string",
+      "description": "How users bring in more users"
+    },
+    "stack": {
+      "type": "object",
+      "required": ["frontend", "backend", "database", "hosting"],
+      "properties": {
+        "frontend": { "type": "string" },
+        "backend": { "type": "string" },
+        "database": { "type": "string" },
+        "hosting": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "build_time": {
+      "type": "string",
+      "description": "Estimated time to ship MVP (e.g., '3 days', '1 week')"
+    },
+    "confidence": {
+      "type": "object",
+      "required": ["score", "justification"],
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "justification": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "specced", "approved", "killed"],
+      "description": "Current pipeline status"
+    },
+    "ranking": {
+      "type": "object",
+      "description": "Populated after the rank command",
+      "properties": {
+        "pain": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "market": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "buildability": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "moat": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "revenue": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "virality": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "weighted_score": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

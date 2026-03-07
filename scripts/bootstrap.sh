@@ -8,7 +8,7 @@ set -euo pipefail
 # Usage: ./scripts/bootstrap.sh
 # =============================================================================
 
-REPO="eitandooreckaloni/openclaw-set-up"
+REPO="eitandooreckaloni/AppFactory"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -167,7 +167,7 @@ echo ""
 
 prompt_secret ANTHROPIC_API_KEY "Anthropic Claude API key (from console.anthropic.com)"
 prompt_secret OPENAI_API_KEY    "OpenAI API key (from platform.openai.com/api-keys)"
-prompt_secret TELEGRAM_BOT_TOKEN "Telegram bot token (from @BotFather for @EitanOpenclawAgentBot)"
+prompt_secret TELEGRAM_BOT_TOKEN "Telegram bot token (from @BotFather for @OpenclawAppFactoryBot)"
 prompt_secret GITHUB_TOKEN      "GitHub PAT with repo scope (from github.com/settings/tokens)"
 prompt_secret DUCKDNS_TOKEN     "DuckDNS token (log in via GitHub at duckdns.org, token on dashboard)"
 
@@ -263,11 +263,11 @@ echo -e "${GREEN}  OpenClaw AppFactory is running!${NC}"
 echo -e "${GREEN}============================================================${NC}"
 echo ""
 echo -e "  Domain:    https://${DOMAIN}"
-echo -e "  Telegram:  t.me/EitanOpenclawAgentBot"
+echo -e "  Telegram:  t.me/OpenclawAppFactoryBot"
 echo -e "  Auth:      ${OPENCLAW_AUTH_TOKEN:0:8}... (full token in .env)"
 echo ""
 echo -e "  ${CYAN}Next steps:${NC}"
-echo -e "  1. Open Telegram and message @EitanOpenclawAgentBot"
+echo -e "  1. Open Telegram and message @OpenclawAppFactoryBot"
 echo -e "  2. Describe an app you want to build"
 echo -e "  3. Watch the magic happen"
 echo ""

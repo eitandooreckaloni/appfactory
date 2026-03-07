@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AppFactory Spec",
+  "description": "Schema for a full build spec produced by the AppFactory pipeline",
+  "type": "object",
+  "required": [
+    "idea_id",
+    "name",
+    "pages",
+    "components",
+    "backend",
+    "db_schema",
+    "analytics_events",
+    "deployment_checklist"
+  ],
+  "properties": {
+    "idea_id": {
+      "type": "integer",
+      "description": "References the idea this spec is for"
+    },
+    "name": {
+      "type": "string"
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["route", "purpose", "auth_required"],
+        "properties": {
+          "route": { "type": "string" },
+          "purpose": { "type": "string" },
+          "auth_required": { "type": "boolean" },
+          "key_ui_elements": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "props", "behavior", "used_in"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "PascalCase component name"
+          },
+          "props": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "required": { "type": "boolean", "default": true }
+              },
+              "additionalProperties": false
+            }
+          },
+          "behavior": { "type": "string" },
+          "used_in": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Routes where this component appears"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "backend": {
+      "type": "object",
+      "required": ["endpoints", "auth_flow"],
+      "properties": {
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["method", "path", "description"],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+              },
+              "path": { "type": "string" },
+              "description": { "type": "string" },
+              "auth_required": { "type": "boolean", "default": false },
+              "request_body": { "type": "object" },
+              "response_body": { "type": "object" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "auth_flow": {
+          "type": "string",
+          "description": "How authentication works (e.g., 'Supabase Auth with magic link + Google OAuth')"
+        },
+        "external_services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "purpose"],
+            "properties": {
+              "name": { "type": "string" },
+              "purpose": { "type": "string" },
+              "api_docs_url": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "business_logic": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Key algorithms or workflows worth calling out"
+        }
+      },
+      "additionalProperties": false
+    },
+    "db_schema": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["table", "columns"],
+        "properties": {
+          "table": { "type": "string" },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "constraints": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "e.g., ['PK', 'NOT NULL', 'UNIQUE', 'FK:users.id']"
+                },
+                "default": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "indexes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "relationships": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "e.g., 'one-to-many: users -> posts'"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "analytics_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["event_name", "trigger", "properties", "why_it_matters"],
+        "properties": {
+          "event_name": {
+            "type": "string",
+            "description": "snake_case event name"
+          },
+          "trigger": { "type": "string" },
+          "properties": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "why_it_matters": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 5,
+      "maxItems": 10
+    },
+    "deployment_checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "description"],
+        "properties": {
+          "step": { "type": "integer" },
+          "description": { "type": "string" },
+          "commands": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "future_considerations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Post-MVP ideas to revisit later"
+    }
+  },
+  "additionalProperties": false
+}
