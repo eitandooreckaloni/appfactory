@@ -23,3 +23,22 @@ For each idea, produce ALL of these fields:
 - **confidence**: Integer 1-10 with justification
 
 If the user has mentioned interests, preferences, or constraints, incorporate them. Otherwise, draw from the trends listed in system.md.
+
+## Using Research Context
+
+When a research brief is provided:
+
+1. **Prioritize evidenced pain points** -- Ideas grounded in real complaints/frustrations from the research should come first.
+2. **Reference specific signals** -- In `why_now`, cite the trend or pain point from the research that makes this timely.
+3. **Fill `research_grounding`** -- For each idea, include 1-3 short strings describing which research signals informed it (e.g., "HN complaints about slow invoicing", "Reddit freelancers wanting auto-contracts").
+4. **Avoid duplicating recent launches** -- If the research shows a recent launch doing something similar, differentiate or skip.
+
+## Refinement Mode
+
+When refining an existing idea with user feedback:
+
+1. **Read the original idea carefully** -- Understand its strengths and weaknesses.
+2. **Apply the feedback precisely** -- Change what the user asked to change, keep what works.
+3. **Produce exactly 1 idea** -- Not 5. The refined idea replaces the original.
+4. **Maintain schema compliance** -- All required fields must be present and valid.
+5. **Populate `research_grounding`** -- If research context is available, ground the refinement in it.

@@ -39,13 +39,15 @@ echo ""
 check_file "$SKILL_DIR/SKILL.md" "appfactory skill"
 
 # Sub-agents
-check_file "$SKILL_DIR/agents/scout/SKILL.md"  "sub-agent: scout"
-check_file "$SKILL_DIR/agents/ranker/SKILL.md" "sub-agent: ranker"
-check_file "$SKILL_DIR/agents/pm/SKILL.md"     "sub-agent: pm"
+check_file "$SKILL_DIR/agents/scout/SKILL.md"      "sub-agent: scout"
+check_file "$SKILL_DIR/agents/ranker/SKILL.md"     "sub-agent: ranker"
+check_file "$SKILL_DIR/agents/pm/SKILL.md"         "sub-agent: pm"
+check_file "$SKILL_DIR/agents/researcher/SKILL.md" "sub-agent: researcher"
 
 # Schemas
-check_file "$SKILL_DIR/schemas/idea.schema.json" "schema: idea"
-check_file "$SKILL_DIR/schemas/spec.schema.json" "schema: spec"
+check_file "$SKILL_DIR/schemas/idea.schema.json"     "schema: idea"
+check_file "$SKILL_DIR/schemas/spec.schema.json"     "schema: spec"
+check_file "$SKILL_DIR/schemas/research.schema.json" "schema: research"
 
 # Prompts
 check_file "$SKILL_DIR/prompts/system.md"  "prompt: system"
