@@ -1,0 +1,36 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 89.167.116.2
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/appfactory
+            git pull
+
+            cat > .env <<'ENVEOF'
+            DOMAIN=${{ vars.DOMAIN }}
+            DUCKDNS_SUBDOMAIN=${{ vars.DUCKDNS_SUBDOMAIN }}
+            DUCKDNS_TOKEN=${{ secrets.DUCKDNS_TOKEN }}
+            ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            GITHUB_TOKEN=${{ secrets.OPENCLAW_GH_PAT }}
+            GITHUB_USER=eitandooreckaloni
+            OPENCLAW_AUTH_TOKEN=${{ secrets.OPENCLAW_AUTH_TOKEN }}
+            ENVEOF
+
+            chmod 600 .env
+            docker compose pull
+            docker compose up -d --remove-orphans
