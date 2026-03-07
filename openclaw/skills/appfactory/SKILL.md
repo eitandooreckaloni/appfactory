@@ -92,12 +92,18 @@ active → specced → designed → building → built → developed → qa_pass
 
 ## Dispatch Protocol
 
-When dispatching to a sub-agent:
+**CRITICAL: Always use `sessions_spawn` to dispatch sub-agents.** Never do sub-agent work inline -- this bloats your context and will break on long pipelines.
 
-1. **Send** the sub-agent its SKILL.md + the relevant input data
-2. **Receive** structured JSON output (validated against `schemas/`)
-3. **Update** `pipeline.json` with the result
-4. **Summarize** the result to the user in a short message
+For each sub-agent dispatch:
+
+1. **Read** the sub-agent's SKILL.md from `{baseDir}/agents/<name>/SKILL.md`
+2. **Spawn** via `sessions_spawn` with `task` containing: the SKILL.md content + the relevant input data (idea object, spec, design spec, etc. as JSON)
+3. **Wait** for the announce -- the sub-agent will post its result back to this chat when done
+4. **Parse** the JSON result from the announce message
+5. **Update** `pipeline.json` with the result
+6. **Summarize** to the user in a short message (never echo the full result)
+
+For chained pipelines (`approve`, `auto`), process each announce as it arrives. Check `pipeline.json` status to know what step comes next. Do not try to run the entire chain in one turn -- let each sub-agent announce back, then dispatch the next one.
 
 ### `ideas` Pipeline (3-step, optionally 4 with YouTube)
 
@@ -295,7 +301,11 @@ Show contextual info per status: `live_url` for deployed, "ready for X" hint for
 ## Rules
 
 - Never generate content yourself. You are a router, not a thinker.
-- Keep your context lean. Don't echo full ideas or specs back into the conversation -- summarize.
+- **Keep your context lean.** This is critical for multi-app runs:
+  - ALWAYS use `sessions_spawn` for sub-agent work. Never do it inline.
+  - Don't echo full specs, ideas, or sub-agent outputs into the conversation -- summarize in 1-3 sentences.
+  - When passing data to sub-agents, read it from files (pipeline.json, specs/, designs/) and include it in the `sessions_spawn` task. Don't store large JSON blobs in conversation history.
+  - After processing a sub-agent announce, store the result in pipeline.json and discard the details.
 - If `pipeline.json` doesn't exist yet, create it with `{ "next_id": 1, "ideas": [] }`.
 - If the user asks about an idea number that doesn't exist, say so.
 - If the user asks for `rank` with no active ideas, tell them to run `ideas` first.
