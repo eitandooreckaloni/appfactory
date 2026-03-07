@@ -26,9 +26,6 @@ channels:
   telegram:
     enabled: true
     bot_token: ${TELEGRAM_BOT_TOKEN}
-    webhook:
-      enabled: true
-      url: https://${DOMAIN}/telegram/webhook
 
 integrations:
   github:
