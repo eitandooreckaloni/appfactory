@@ -170,6 +170,7 @@ prompt_secret OPENAI_API_KEY    "OpenAI API key (from platform.openai.com/api-ke
 prompt_secret TELEGRAM_BOT_TOKEN "Telegram bot token (from @BotFather for @OpenclawAppFactoryBot)"
 prompt_secret GITHUB_TOKEN      "GitHub PAT with repo scope (from github.com/settings/tokens)"
 prompt_secret DUCKDNS_TOKEN     "DuckDNS token (log in via GitHub at duckdns.org, token on dashboard)"
+prompt_secret VERCEL_TOKEN      "Vercel API token (from vercel.com/account/tokens)"
 
 ok "All secrets collected."
 
@@ -193,6 +194,7 @@ OPENAI_API_KEY=${OPENAI_API_KEY}
 TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
 GITHUB_TOKEN=${GITHUB_TOKEN}
 GITHUB_USER=eitandooreckaloni
+VERCEL_TOKEN=${VERCEL_TOKEN}
 OPENCLAW_AUTH_TOKEN=${OPENCLAW_AUTH_TOKEN}
 EOF
 chmod 600 "$PROJECT_DIR/.env"
