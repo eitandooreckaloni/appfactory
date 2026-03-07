@@ -38,14 +38,15 @@ gh variable set DOMAIN --body "eitan-openclaw.duckdns.org" --repo eitandooreckal
 gh variable set DUCKDNS_SUBDOMAIN --body "eitan-openclaw" --repo eitandooreckaloni/openclaw-set-up
 
 # Secrets (write-only backup -- you'll paste these during bootstrap)
+# Note: GitHub reserves GITHUB_* for Actions; use OPENCLAW_GH_PAT for the PAT
 gh secret set ANTHROPIC_API_KEY --repo eitandooreckaloni/openclaw-set-up
 gh secret set OPENAI_API_KEY --repo eitandooreckaloni/openclaw-set-up
 gh secret set TELEGRAM_BOT_TOKEN --repo eitandooreckaloni/openclaw-set-up
-gh secret set GITHUB_TOKEN --repo eitandooreckaloni/openclaw-set-up
+gh secret set OPENCLAW_GH_PAT --repo eitandooreckaloni/openclaw-set-up
 gh secret set DUCKDNS_TOKEN --repo eitandooreckaloni/openclaw-set-up
 ```
 
-GitHub secrets are write-only (can't be read back via API), so during bootstrap the script prompts you to paste each one. They're stored in GitHub as your single source of truth.
+GitHub secrets are write-only (can't be read back via API), so during bootstrap the script prompts you to paste each one. They're stored in GitHub as your single source of truth. The GitHub PAT is stored as `OPENCLAW_GH_PAT` because GitHub reserves `GITHUB_*` names for Actions.
 
 ---
 

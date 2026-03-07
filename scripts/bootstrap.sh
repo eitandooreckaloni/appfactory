@@ -162,6 +162,7 @@ info "Step 8/15: Collecting secrets..."
 echo ""
 echo -e "${YELLOW}You'll now paste each secret. They're stored in your GitHub repo secrets"
 echo -e "at github.com/$REPO/settings/secrets/actions as a backup/reference.${NC}"
+echo -e "GitHub PAT: store as OPENCLAW_GH_PAT (GitHub reserves GITHUB_* names).${NC}"
 echo ""
 
 prompt_secret ANTHROPIC_API_KEY "Anthropic Claude API key (from console.anthropic.com)"
