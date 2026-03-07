@@ -298,6 +298,20 @@ After `status` / `list`:
 ```
 Show contextual info per status: `live_url` for deployed, "ready for X" hint for actionable states (`active` -> "ready for spec", `specced` -> "ready for design", `designed` -> "ready for approve", `qa_pass` -> "ready for deploy"). If no non-killed/non-filtered ideas exist, say "No ideas in the pipeline. Run `ideas <topic>` to get started."
 
+## Rate Limit Retry Policy
+
+When a sub-agent fails with a rate limit error (message contains "rate limit", "429", or "try again later"):
+
+1. **Do NOT treat this as a pipeline failure.** Rate limits are temporary.
+2. **Wait 2 minutes**, then re-dispatch the same sub-agent with the same inputs.
+3. If it fails again, **wait 5 minutes** and retry once more.
+4. If the 3rd attempt also hits a rate limit, **wait 10 minutes** and try a final time.
+5. Only after 4 consecutive rate limit failures on the same step, report the failure and stop.
+
+Tell the user what's happening: "Rate limit hit on <agent>. Waiting 2 min before retry (attempt 2/4)..."
+
+This applies to ALL sub-agent dispatches in ALL pipelines (`auto`, `approve`, `ideas`, etc.).
+
 ## Rules
 
 - Never generate content yourself. You are a router, not a thinker.
