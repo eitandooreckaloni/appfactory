@@ -6,7 +6,7 @@ A portable, Dockerized OpenClaw orchestrator that builds apps from Telegram mess
 
 ```bash
 ssh root@YOUR_SERVER_IP
-git clone https://github.com/eitandooreckaloni/AppFactory.git appfactory
+git clone https://github.com/eitandooreckaloni/appfactory.git appfactory
 cd appfactory
 ./scripts/bootstrap.sh
 ```
@@ -34,16 +34,16 @@ Store your secrets in GitHub so you always know where they are. From your laptop
 
 ```bash
 # Non-sensitive config (readable, pulled automatically by bootstrap)
-gh variable set DOMAIN --body "eitan-openclaw.duckdns.org" --repo eitandooreckaloni/AppFactory
-gh variable set DUCKDNS_SUBDOMAIN --body "eitan-openclaw" --repo eitandooreckaloni/AppFactory
+gh variable set DOMAIN --body "eitan-openclaw.duckdns.org" --repo eitandooreckaloni/appfactory
+gh variable set DUCKDNS_SUBDOMAIN --body "eitan-openclaw" --repo eitandooreckaloni/appfactory
 
 # Secrets (write-only backup -- you'll paste these during bootstrap)
 # Note: GitHub reserves GITHUB_* for Actions; use OPENCLAW_GH_PAT for the PAT
-gh secret set ANTHROPIC_API_KEY --repo eitandooreckaloni/AppFactory
-gh secret set OPENAI_API_KEY --repo eitandooreckaloni/AppFactory
-gh secret set TELEGRAM_BOT_TOKEN --repo eitandooreckaloni/AppFactory
-gh secret set OPENCLAW_GH_PAT --repo eitandooreckaloni/AppFactory
-gh secret set DUCKDNS_TOKEN --repo eitandooreckaloni/AppFactory
+gh secret set ANTHROPIC_API_KEY --repo eitandooreckaloni/appfactory
+gh secret set OPENAI_API_KEY --repo eitandooreckaloni/appfactory
+gh secret set TELEGRAM_BOT_TOKEN --repo eitandooreckaloni/appfactory
+gh secret set OPENCLAW_GH_PAT --repo eitandooreckaloni/appfactory
+gh secret set DUCKDNS_TOKEN --repo eitandooreckaloni/appfactory
 ```
 
 GitHub secrets are write-only (can't be read back via API), so during bootstrap the script prompts you to paste each one. They're stored in GitHub as your single source of truth. The GitHub PAT is stored as `OPENCLAW_GH_PAT` because GitHub reserves `GITHUB_*` names for Actions.
@@ -111,7 +111,7 @@ You (Telegram) ──► @OpenclawAppFactoryBot
 
 ```bash
 ssh root@HETZNER_IP
-git clone https://github.com/eitandooreckaloni/AppFactory.git appfactory
+git clone https://github.com/eitandooreckaloni/appfactory.git appfactory
 cd appfactory
 ./scripts/bootstrap.sh
 ```
@@ -121,7 +121,7 @@ cd appfactory
 ```bash
 # On the NEW server:
 ssh root@NEW_SERVER_IP
-git clone https://github.com/eitandooreckaloni/AppFactory.git appfactory
+git clone https://github.com/eitandooreckaloni/appfactory.git appfactory
 cd appfactory
 ./scripts/bootstrap.sh
 ```

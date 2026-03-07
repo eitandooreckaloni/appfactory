@@ -8,7 +8,7 @@ set -euo pipefail
 # Usage: ./scripts/bootstrap.sh
 # =============================================================================
 
-REPO="eitandooreckaloni/AppFactory"
+REPO="eitandooreckaloni/appfactory"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
