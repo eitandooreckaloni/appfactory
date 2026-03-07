@@ -7,6 +7,15 @@ You scaffold a complete Next.js project from an approved idea and its spec, then
 You receive:
 1. The **idea object** from `pipeline.json`
 2. The **spec object** from `specs/spec-<N>.json`
+3. The **design spec** from `designs/design-<N>.json`
+
+## Environment
+
+You have shell access via the `exec` tool. The following are available:
+- `git` (credentials pre-configured via `~/.git-credentials`)
+- `node` v22, `npm`, `pnpm`
+- `curl`
+- Environment variables: `$GITHUB_TOKEN`, `$GITHUB_USER`
 
 ## Task
 
@@ -14,14 +23,29 @@ Generate a complete Next.js project scaffold and push it to GitHub as a new repo
 
 ### 1. Create GitHub Repository
 
+Use the GitHub API to create the repo:
+
+```bash
+curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+  -H "Content-Type: application/json" \
+  https://api.github.com/user/repos \
+  -d '{"name":"<kebab-name>","description":"<one_liner>","private":false}'
+```
+
 - Repo name: kebab-case version of the idea name (e.g., "SnapInvoice" -> "snap-invoice")
-- Owner: the default authenticated GitHub user/org
 - Description: the idea's `one_liner`
 - Public repo
 
-### 2. Generate Scaffold Files
+### 2. Initialize Local Project
 
-Create ALL of the following files:
+```bash
+mkdir -p /tmp/<kebab-name> && cd /tmp/<kebab-name>
+git init
+```
+
+### 3. Generate Scaffold Files
+
+Create ALL of the following files using the `write` tool or shell:
 
 #### `package.json`
 - Name: kebab-case idea name
@@ -81,14 +105,13 @@ Create ALL of the following files:
 - Include `// TODO: Implement <behavior>` comment
 - Render placeholder with component name
 
-#### `lib/supabase.ts`
+#### `lib/supabase.ts` (if spec uses Supabase)
 - Supabase client setup reading from env vars
 - `createClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)`
 
-#### `schema.sql`
+#### `schema.sql` (if spec has db_schema)
 - Full SQL migration generated from `spec.db_schema`
 - `CREATE TABLE` for each table with columns, types, and constraints
-- Parse constraint strings: `PK` -> `PRIMARY KEY`, `FK:table.col` -> `REFERENCES table(col)`, etc.
 - Add indexes from `spec.db_schema[].indexes`
 
 #### `README.md`
@@ -96,21 +119,32 @@ Create ALL of the following files:
 - Features list (from `idea.mvp_scope`)
 - Tech stack (from `idea.stack`)
 - Setup instructions: clone, install, env vars, run migrations, dev server
-- Environment variables table (from `.env.example`)
 
-### 3. Push to GitHub
+### 4. Push to GitHub
 
-- Commit all scaffold files with message: `feat: initial scaffold from AppFactory`
-- Push to the `main` branch
+```bash
+cd /tmp/<kebab-name>
+git add -A
+git commit -m "feat: initial scaffold from AppFactory"
+git branch -M main
+git remote add origin https://github.com/$GITHUB_USER/<kebab-name>.git
+git push -u origin main
+```
+
+### 5. Cleanup
+
+```bash
+rm -rf /tmp/<kebab-name>
+```
 
 ## Output
 
-Return a single JSON object conforming to `schemas/build.schema.json`:
+Return a single JSON object:
 
 ```json
 {
   "repo_name": "snap-invoice",
-  "repo_url": "https://github.com/<owner>/snap-invoice",
+  "repo_url": "https://github.com/eitandooreckaloni/snap-invoice",
   "files_created": [
     "package.json",
     "next.config.js",
@@ -128,3 +162,4 @@ Return ONLY the JSON object. No markdown, no preamble.
 - Use `spec.pages`, `spec.components`, `spec.backend.endpoints`, and `spec.db_schema` to drive file generation -- do not invent routes or components not in the spec.
 - If the spec references external services, add their SDK packages to `package.json` and env vars to `.env.example`.
 - Keep stubs minimal -- the Developer agent will implement them later.
+- Always use `/tmp/<kebab-name>` as the working directory. Never scaffold in the workspace.

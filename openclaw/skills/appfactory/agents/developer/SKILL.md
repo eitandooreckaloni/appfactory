@@ -9,7 +9,15 @@ You receive:
 2. The **spec object** from `specs/spec-<N>.json`
 3. The **design spec** from `designs/design-<N>.json`
 4. The **build output** from the Builder agent (`repo_name`, `repo_url`, `files_created`)
-5. *(Optional)* The **qa_output** from a previous failed QA run — present only on retry attempts
+5. *(Optional)* The **qa_output** from a previous failed QA run -- present only on retry attempts
+
+## Environment
+
+You have shell access via the `exec` tool. The following are available:
+- `git` (credentials pre-configured via `~/.git-credentials`)
+- `node` v22, `npm`, `pnpm`
+- `curl`
+- Environment variables: `$GITHUB_TOKEN`, `$GITHUB_USER`
 
 ## Task
 
@@ -24,7 +32,16 @@ If `qa_output` is provided (from a failed QA run), you are in **retry mode**:
 - Make targeted fixes for each QA issue. Only touch files relevant to the failures.
 - After fixing, proceed with the normal build verification steps below.
 
-### 1. Global Config
+### 1. Clone the Repo
+
+```bash
+cd /tmp
+git clone https://github.com/$GITHUB_USER/<repo_name>.git
+cd <repo_name>
+npm install
+```
+
+### 2. Global Config
 
 Update these files using the design spec:
 
@@ -32,7 +49,7 @@ Update these files using the design spec:
 - **`app/globals.css`**: Add CSS custom properties for the design spec's color system and typography scale after the Tailwind directives.
 - **`app/layout.tsx`**: Import the design spec's font (from `next/font/google` or a CDN). Apply the font class to the `<body>`. Set metadata title and description from the idea.
 
-### 2. Page Files (`app/*/page.tsx`)
+### 3. Page Files (`app/*/page.tsx`)
 
 For each page in `spec.pages`:
 - Implement the full UI using the spec's `key_ui_elements` and the design spec's component styles, colors, and spacing.
@@ -42,7 +59,7 @@ For each page in `spec.pages`:
 - Implement data fetching: server components use `lib/supabase.ts` directly, client components use `useEffect` + fetch to API routes.
 - Render realistic placeholder data where the database doesn't exist yet (e.g., mock arrays).
 
-### 3. API Routes (`app/api/*/route.ts`)
+### 4. API Routes (`app/api/*/route.ts`)
 
 For each endpoint in `spec.backend.endpoints`:
 - Implement request body parsing with basic validation.
@@ -51,57 +68,64 @@ For each endpoint in `spec.backend.endpoints`:
 - For `auth_required` endpoints, check the Supabase session from the request headers.
 - Use `NextResponse.json()` for all responses.
 
-### 4. Components (`components/*.tsx`)
+### 5. Components (`components/*.tsx`)
 
 For each component in `spec.components`:
 - Implement the full component with props interface matching the spec.
 - Apply the design spec's component styles: visual description, states (hover, active, disabled, error), and animation.
 - Use Tailwind classes for all styling. Use the design spec's exact color values, border radius, padding, and shadows.
-- For animations, use the library specified in the design spec's `motion` section (CSS transitions preferred, then Framer Motion).
+- For animations, use CSS transitions preferred, then Framer Motion if specified.
 - Respect `prefers-reduced-motion` for all animations.
 
-### 5. Supabase Client (`lib/supabase.ts`)
+### 6. Supabase Client (`lib/supabase.ts`)
 
-Implement with:
+If the spec uses Supabase, implement with:
 - `createClient` from `@supabase/supabase-js`
 - Read `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from environment
 - Export a singleton client instance
-- Add a `createServerClient` export for server-side usage if spec has auth
 
-### 6. Additional Dependencies
+### 7. Additional Dependencies
 
 If the spec references external services not yet in `package.json`:
 - Run `npm install <package>` for each missing dependency
 - Create corresponding client setup files in `lib/` (e.g., `lib/stripe.ts`)
 
-### 7. Self-Validation
+### 8. Self-Validation
 
 Before running the build, do a quick sanity check:
 1. Scan all implemented files for leftover `// TODO` comments. If any remain, fill them in.
 2. Cross-reference the spec's `pages`, `endpoints`, and `components` lists against the files you implemented. If anything is missing, implement it now.
 
-### 8. Build Verification
+### 9. Build Verification
 
 After implementing all files:
 1. Run `npm run build`
 2. If the build fails, read the error output, fix the issues, and retry
 3. Maximum 3 build attempts
-4. On each retry, fix only the reported errors — do not rewrite working files
+4. On each retry, fix only the reported errors -- do not rewrite working files
 
-### 9. Commit & Push
+### 10. Commit & Push
 
-- Stage all changed files
-- Commit with message: `feat: implement all pages, routes, and components`
-- Push to the `main` branch
+```bash
+git add -A
+git commit -m "feat: implement all pages, routes, and components"
+git push origin main
+```
+
+### 11. Cleanup
+
+```bash
+rm -rf /tmp/<repo_name>
+```
 
 ## Output
 
-Return a single JSON object conforming to `schemas/develop.schema.json`:
+Return a single JSON object:
 
 ```json
 {
   "repo_name": "snap-invoice",
-  "repo_url": "https://github.com/<owner>/snap-invoice",
+  "repo_url": "https://github.com/eitandooreckaloni/snap-invoice",
   "files_implemented": [
     "app/page.tsx",
     "app/dashboard/page.tsx",
@@ -122,11 +146,12 @@ Return ONLY the JSON object. No markdown, no preamble.
 ## Rules
 
 - Write real, compilable TypeScript. Every file must be a valid module.
-- Use the design spec's exact values — hex colors, pixel sizes, font names. Do not approximate.
+- Use the design spec's exact values -- hex colors, pixel sizes, font names. Do not approximate.
 - Only add `"use client"` when the component uses React hooks or browser APIs.
 - Do not invent pages, routes, or components not in the spec. Implement only what the spec defines.
-- Use the Supabase client from `lib/supabase.ts` for all database operations — never create ad-hoc clients.
-- Keep code simple. No over-abstraction. Three similar lines are better than a premature utility function.
+- Use the Supabase client from `lib/supabase.ts` for all database operations -- never create ad-hoc clients.
+- Keep code simple. No over-abstraction.
 - If a page has no interactivity, keep it as a server component.
 - Ensure all imports resolve. Do not import files that don't exist.
 - Handle loading and error states in client components (use the design spec's `loading_pattern`).
+- Always work in `/tmp/<repo_name>`. Never clone into the workspace.

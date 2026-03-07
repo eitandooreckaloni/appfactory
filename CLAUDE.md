@@ -34,6 +34,8 @@ ideas [topic]  -->  spec N  -->  design N  -->  approve N  -->  deploy N
 | `develop N` | Developer (manual re-trigger) | `built` -> `developed` |
 | `qa N` | QA (manual re-trigger) | `developed` -> `qa_pass`/`qa_fail` |
 | `deploy N` | Deployer | `qa_pass` -> `deployed` |
+| `inspo "url"` | Inspo (Gemini API) | saves to `inspirations/` |
+| `inspo N "url"` | Inspo (Gemini API) | saves + attaches to idea #N |
 | `auto [topic]` | Full pipeline end-to-end | -> `deployed` |
 | `kill N` | (router direct) | -> `killed` |
 
@@ -44,7 +46,7 @@ active -> specced -> designed -> building -> built -> developed -> qa_pass -> de
                                                                 -> qa_fail
 ```
 
-### Sub-Agents (9 total)
+### Sub-Agents (10 total)
 
 | Agent | Location | Role |
 |-------|----------|------|
@@ -56,6 +58,7 @@ active -> specced -> designed -> building -> built -> developed -> qa_pass -> de
 | Builder | `agents/builder/` | Scaffold Next.js project on GitHub |
 | Developer | `agents/developer/` | Implement all stub code |
 | QA | `agents/qa/` | Validate build, pass/fail verdict |
+| Inspo | `agents/inspo/` | Analyze YouTube videos via Gemini for visual/product inspiration |
 | Deployer | `agents/deployer/` | Deploy to Vercel + Supabase, return live URL |
 
 ## Key File Paths
@@ -88,6 +91,7 @@ workspace/appfactory/
   research.json               # Cached research brief
   specs/spec-N.json           # PM specs
   designs/design-N.json       # Design specs
+  inspirations/inspo-M.json   # YouTube video inspiration analyses
 ```
 
 ## Adding a New Token/Secret

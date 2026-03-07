@@ -104,6 +104,11 @@
       "type": "string",
       "description": "GitHub repo URL, set after Builder scaffolds the project"
     },
+    "inspirations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Filenames of inspiration analyses (e.g., inspo-1.json) attached to this idea"
+    },
     "ranking": {
       "type": "object",
       "description": "Populated after the rank command",

@@ -31,6 +31,7 @@ jobs:
             VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}
             OPENCLAW_AUTH_TOKEN=${{ secrets.OPENCLAW_AUTH_TOKEN }}
             BRAVE_API_KEY=${{ secrets.BRAVE_API_KEY }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
             ENVEOF
 
             chmod 600 .env

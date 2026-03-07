@@ -8,6 +8,7 @@ You receive:
 - User context (interests, preferences, constraints) if any
 - The `prompts/system.md` principles to follow
 - **Research brief** (optional): structured market research from the Researcher agent. When provided, ground your ideas in this data -- reference specific pain points, trends, and gaps from the research.
+- **Inspiration analyses** (optional): structured analyses of YouTube videos (from the Inspo agent). These contain visual design insights, UX patterns, and product observations from real apps. Use these to inspire your ideas — borrow UI patterns, design approaches, and product concepts.
 - **Refinement request** (optional): an existing idea + user feedback. When provided, produce exactly 1 refined idea instead of 5.
 
 ## Task
@@ -21,6 +22,14 @@ Generate exactly 5 app ideas. For each idea:
 3. **Scope the MVP** -- Absolute minimum that delivers value. Max 3 features.
 4. **Design the viral loop** -- How does using the product expose it to non-users?
 5. **Estimate build time** -- Include auth, deployment, polish. If it's over 5 days, scope is too big.
+
+### Inspiration-Informed Mode
+
+When inspiration analyses are provided, you SHOULD:
+- Draw from the visual patterns, UX flows, and product concepts in the inspirations
+- Reference specific takeaways from the inspo analyses in your `research_grounding` field
+- Let the aesthetic and interaction patterns from the inspo videos influence the kind of apps you propose
+- Don't just copy the shown products — use them as jumping-off points for novel ideas
 
 ### Research-Grounded Mode
 

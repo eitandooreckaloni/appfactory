@@ -172,6 +172,7 @@ prompt_secret GITHUB_TOKEN      "GitHub PAT with repo scope (from github.com/set
 prompt_secret DUCKDNS_TOKEN     "DuckDNS token (log in via GitHub at duckdns.org, token on dashboard)"
 prompt_secret VERCEL_TOKEN      "Vercel API token (from vercel.com/account/tokens)"
 prompt_secret BRAVE_API_KEY     "Brave Search API key (from brave.com/search/api)"
+prompt_secret GEMINI_API_KEY    "Google Gemini API key (from aistudio.google.com/apikey)"
 
 ok "All secrets collected."
 
@@ -198,6 +199,7 @@ GITHUB_USER=eitandooreckaloni
 VERCEL_TOKEN=${VERCEL_TOKEN}
 OPENCLAW_AUTH_TOKEN=${OPENCLAW_AUTH_TOKEN}
 BRAVE_API_KEY=${BRAVE_API_KEY}
+GEMINI_API_KEY=${GEMINI_API_KEY}
 EOF
 chmod 600 "$PROJECT_DIR/.env"
 ok ".env written and permissions set to 600."
