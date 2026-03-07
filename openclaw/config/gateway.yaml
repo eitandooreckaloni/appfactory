@@ -1,5 +1,6 @@
 gateway:
-  port: 3000
+  port: 18789
+  host: 0.0.0.0
   auth:
     token: ${OPENCLAW_AUTH_TOKEN}
 

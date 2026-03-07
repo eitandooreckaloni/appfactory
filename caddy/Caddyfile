@@ -1,5 +1,5 @@
 {$DOMAIN} {
-	reverse_proxy openclaw:3000
+	reverse_proxy openclaw:18789
 
 	header {
 		-Server

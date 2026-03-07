@@ -41,7 +41,7 @@ info "Waiting for OpenClaw to be healthy..."
 RETRIES=20
 READY=false
 for i in $(seq 1 $RETRIES); do
-    if docker compose exec openclaw sh -c "curl -sf http://localhost:3000/health" &>/dev/null 2>&1; then
+    if docker compose exec openclaw sh -c "curl -sf http://localhost:18789/health" &>/dev/null 2>&1; then
         READY=true
         break
     fi

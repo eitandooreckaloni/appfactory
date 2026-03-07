@@ -19,12 +19,14 @@ services:
     image: ghcr.io/openclaw/openclaw:latest
     restart: unless-stopped
     expose:
-      - "3000"
+      - "18789"
     volumes:
-      - ./openclaw/config:/app/config:ro
       - ./openclaw/skills:/app/skills:ro
-      - openclaw_data:/app/data
+      - openclaw_data:/home/node/.openclaw
       - openclaw_workspace:/app/workspace
+    environment:
+      - OPENCLAW_HOST=0.0.0.0
+      - OPENCLAW_PORT=18789
     env_file:
       - .env
 
