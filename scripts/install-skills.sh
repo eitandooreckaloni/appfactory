@@ -2,41 +2,61 @@
 set -euo pipefail
 
 # =============================================================================
-# Install OpenClaw community skills + verify custom appfactory skill
+# Verify the custom appfactory skill and its sub-agents are present.
 # Called by bootstrap.sh after OpenClaw is healthy.
 # =============================================================================
 
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
 NC='\033[0m'
 
 info() { echo -e "${CYAN}[SKILL]${NC} $*"; }
 ok()   { echo -e "${GREEN}[SKILL]${NC} $*"; }
-warn() { echo -e "${YELLOW}[SKILL]${NC} $*"; }
+fail() { echo -e "${RED}[SKILL]${NC} $*"; }
 
-SKILLS=(
-    "openclaw/skills --skill agent-orchestrator"
-    "openclaw/skills --skill agent-orchestration-multi-agent-optimize"
-    "openclaw/skills --skill git-manager"
-    "openclaw/skills --skill code-generator"
-)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+SKILL_DIR="$PROJECT_DIR/openclaw/skills/appfactory"
 
-for skill_args in "${SKILLS[@]}"; do
-    skill_name="${skill_args##*--skill }"
-    info "Installing: $skill_name"
-    if docker compose exec openclaw npx playbooks add skill $skill_args 2>/dev/null; then
-        ok "Installed: $skill_name"
+ERRORS=0
+
+check_file() {
+    local file="$1"
+    local label="$2"
+    if [[ -f "$file" ]]; then
+        ok "$label"
     else
-        warn "Failed to install: $skill_name (may not exist or network issue). Continuing."
+        fail "MISSING: $label ($file)"
+        ERRORS=$((ERRORS + 1))
     fi
-done
+}
 
-if [[ -f "openclaw/skills/appfactory/SKILL.md" ]]; then
-    ok "Custom appfactory skill found in openclaw/skills/appfactory/SKILL.md"
-else
-    warn "Custom appfactory skill not found at openclaw/skills/appfactory/SKILL.md"
-fi
+info "Verifying appfactory skill..."
+echo ""
+
+# Main skill
+check_file "$SKILL_DIR/SKILL.md" "appfactory skill"
+
+# Sub-agents
+check_file "$SKILL_DIR/agents/scout/SKILL.md"  "sub-agent: scout"
+check_file "$SKILL_DIR/agents/ranker/SKILL.md" "sub-agent: ranker"
+check_file "$SKILL_DIR/agents/pm/SKILL.md"     "sub-agent: pm"
+
+# Schemas
+check_file "$SKILL_DIR/schemas/idea.schema.json" "schema: idea"
+check_file "$SKILL_DIR/schemas/spec.schema.json" "schema: spec"
+
+# Prompts
+check_file "$SKILL_DIR/prompts/system.md"  "prompt: system"
+check_file "$SKILL_DIR/prompts/ideate.md"  "prompt: ideate"
+check_file "$SKILL_DIR/prompts/rank.md"    "prompt: rank"
+check_file "$SKILL_DIR/prompts/spec.md"    "prompt: spec"
 
 echo ""
-ok "Skill installation complete."
+if [[ $ERRORS -gt 0 ]]; then
+    fail "$ERRORS file(s) missing. Check the openclaw/skills/appfactory directory."
+    exit 1
+else
+    ok "All skill files verified. AppFactory skill is ready."
+fi

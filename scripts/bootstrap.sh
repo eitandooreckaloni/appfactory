@@ -171,6 +171,7 @@ prompt_secret TELEGRAM_BOT_TOKEN "Telegram bot token (from @BotFather for @Openc
 prompt_secret GITHUB_TOKEN      "GitHub PAT with repo scope (from github.com/settings/tokens)"
 prompt_secret DUCKDNS_TOKEN     "DuckDNS token (log in via GitHub at duckdns.org, token on dashboard)"
 prompt_secret VERCEL_TOKEN      "Vercel API token (from vercel.com/account/tokens)"
+prompt_secret BRAVE_API_KEY     "Brave Search API key (from brave.com/search/api)"
 
 ok "All secrets collected."
 
@@ -196,6 +197,7 @@ GITHUB_TOKEN=${GITHUB_TOKEN}
 GITHUB_USER=eitandooreckaloni
 VERCEL_TOKEN=${VERCEL_TOKEN}
 OPENCLAW_AUTH_TOKEN=${OPENCLAW_AUTH_TOKEN}
+BRAVE_API_KEY=${BRAVE_API_KEY}
 EOF
 chmod 600 "$PROJECT_DIR/.env"
 ok ".env written and permissions set to 600."
