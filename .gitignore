@@ -1,0 +1,6 @@
+.env
+openclaw/data/
+openclaw/workspace/
+*.tar.gz
+*.bak
+.DS_Store

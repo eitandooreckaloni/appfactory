@@ -1,0 +1,35 @@
+gateway:
+  port: 3000
+  auth:
+    token: ${OPENCLAW_AUTH_TOKEN}
+
+  discovery:
+    mdns: false
+
+  sandbox:
+    enabled: true
+
+providers:
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}
+    default: true
+    models:
+      - claude-sonnet-4-20250514
+
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - gpt-4o
+
+channels:
+  telegram:
+    enabled: true
+    bot_token: ${TELEGRAM_BOT_TOKEN}
+    webhook:
+      enabled: true
+      url: https://${DOMAIN}/telegram/webhook
+
+integrations:
+  github:
+    token: ${GITHUB_TOKEN}
+    default_owner: ${GITHUB_USER}
