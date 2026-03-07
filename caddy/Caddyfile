@@ -1,4 +1,13 @@
 {$DOMAIN} {
+	handle /api/pipeline* {
+		header Access-Control-Allow-Origin "*"
+		header Access-Control-Allow-Methods "GET, OPTIONS"
+		header Content-Type "application/json"
+		root * /srv/workspace/appfactory
+		rewrite * /pipeline.json
+		file_server
+	}
+
 	reverse_proxy openclaw:18789
 
 	header {
