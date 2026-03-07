@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Inspiration Analysis",
+  "description": "Structured output from the Inspo agent's YouTube video analysis via Gemini",
+  "type": "object",
+  "required": ["youtube_url", "visual_design", "takeaways"],
+  "properties": {
+    "youtube_url": {
+      "type": "string",
+      "description": "The analyzed YouTube video URL"
+    },
+    "video_title": {
+      "type": "string",
+      "description": "Title of the YouTube video"
+    },
+    "product_shown": {
+      "type": "string",
+      "description": "The app or product demonstrated in the video"
+    },
+    "visual_design": {
+      "type": "object",
+      "required": ["aesthetic", "color_palette", "layout_patterns"],
+      "properties": {
+        "aesthetic": {
+          "type": "string",
+          "description": "Overall visual style (e.g., minimal, bold, playful)"
+        },
+        "color_palette": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "hex", "usage"],
+            "properties": {
+              "name": { "type": "string" },
+              "hex": { "type": "string" },
+              "usage": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "typography": {
+          "type": "object",
+          "properties": {
+            "style": { "type": "string" },
+            "notable_choices": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "layout_patterns": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "key_components": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "interactions": {
+      "type": "object",
+      "properties": {
+        "animations": { "type": "string" },
+        "transitions": { "type": "string" },
+        "loading_states": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ux_flow": {
+      "type": "string",
+      "description": "The user journey shown in the video"
+    },
+    "standout_moments": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Uniquely clever or beautiful design moments"
+    },
+    "mood": {
+      "type": "string",
+      "description": "The emotional feeling the interface evokes"
+    },
+    "takeaways": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "maxItems": 5,
+      "description": "Actionable design/product insights for ideation"
+    },
+    "focus_analysis": {
+      "type": "string",
+      "description": "Deeper analysis on a specific area if focus prompt was provided"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if Gemini API call failed"
+    }
+  },
+  "additionalProperties": false
+}

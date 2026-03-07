@@ -24,7 +24,7 @@ ideas [topic]  -->  spec N  -->  design N  -->  approve N  -->  deploy N
 
 | Command | Agents | Status Transition |
 |---------|--------|-------------------|
-| `ideas [topic]` | Researcher -> Scout -> Ranker (auto-filter >= 5.0) | -> `active` or `filtered` |
+| `ideas [topic]` | [Inspo if YouTube URLs] -> Researcher -> [Inspo for YT refs] -> Scout -> Ranker (auto-filter >= 5.0) | -> `active` or `filtered` |
 | `refine N "feedback"` | Scout (refine) -> Ranker | original -> `superseded`, new -> `active`/`filtered` |
 | `rank` | Ranker | (re-scores active ideas) |
 | `spec N` | PM | `active` -> `specced` |
@@ -58,7 +58,7 @@ active -> specced -> designed -> building -> built -> developed -> qa_pass -> de
 | Builder | `agents/builder/` | Scaffold Next.js project on GitHub |
 | Developer | `agents/developer/` | Implement all stub code |
 | QA | `agents/qa/` | Validate build, pass/fail verdict |
-| Inspo | `agents/inspo/` | Analyze YouTube videos via Gemini for visual/product inspiration |
+| Inspo | `agents/inspo/` | Analyze YouTube videos via Gemini API (used by Router, Researcher refs, Designer, or standalone) |
 | Deployer | `agents/deployer/` | Deploy to Vercel + Supabase, return live URL |
 
 ## Key File Paths

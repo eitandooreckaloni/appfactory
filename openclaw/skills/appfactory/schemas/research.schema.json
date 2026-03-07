@@ -58,6 +58,20 @@
         "additionalProperties": false
       }
     },
+    "youtube_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["url", "title", "relevance"],
+        "properties": {
+          "url": { "type": "string" },
+          "title": { "type": "string" },
+          "relevance": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "description": "Relevant YouTube videos found during research"
+    },
     "staleness_warning": {
       "type": "boolean",
       "description": "True if research was generated from training data instead of live search"

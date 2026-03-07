@@ -23,6 +23,16 @@ If no topic is provided, use broad queries:
 - `site:reddit.com "frustrated with" SaaS workflow`
 - `trending indie hacker micro-saas launches`
 
+### YouTube Research
+
+In addition to text-based research, run 1-2 YouTube-targeted searches to find relevant app demos, product reviews, or UI showcases:
+
+- `site:youtube.com <topic> app demo`
+- `site:youtube.com <topic> product review indie`
+- `site:youtube.com <topic> UI walkthrough`
+
+When you find relevant YouTube videos, include them in your output's `youtube_references` array with the URL, video title, and a brief note on why it's relevant. The router or downstream agents can analyze these videos visually via the Gemini API — your job is just to find them.
+
 ## Fallback
 
 If the web search tool is unavailable or returns errors, fall back to reasoning from your training data. In this case:
@@ -48,6 +58,9 @@ Return a JSON object conforming to `schemas/research.schema.json`:
   "recent_launches": [
     { "name": "...", "what": "...", "traction_signal": "..." }
   ],
+  "youtube_references": [
+    { "url": "https://youtube.com/watch?v=...", "title": "...", "relevance": "..." }
+  ],
   "staleness_warning": false
 }
 ```
@@ -59,5 +72,7 @@ Aim for:
 - 2-4 recent launches showing market activity
 
 Include `source_url` whenever you have a real URL from search results. Omit it (don't fabricate) when reasoning from training data.
+
+Include 1-3 `youtube_references` when you find relevant videos. These don't need to be analyzed — just discovered. Downstream agents will analyze them visually if needed.
 
 Return ONLY the JSON object. No markdown, no preamble.

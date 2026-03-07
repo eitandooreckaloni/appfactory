@@ -100,6 +100,11 @@
       "items": { "type": "string" },
       "description": "Key research signals that informed this idea"
     },
+    "inspirations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Filenames of inspiration analyses (e.g., inspo-1.json) attached to this idea"
+    },
     "repo_url": {
       "type": "string",
       "description": "GitHub repo URL, set after Builder scaffolds the project"
