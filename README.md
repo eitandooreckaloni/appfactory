@@ -1,6 +1,93 @@
-# OpenClaw AppFactory
+# AppFactory
 
-A portable, Dockerized OpenClaw orchestrator that builds apps from Telegram messages and pushes them to GitHub. Clone it on any Ubuntu server, run one script, and you're live.
+An [OpenClaw](https://github.com/openclaw/openclaw)-driven orchestration that autonomously ideates, builds, and deploys small web apps — all from a Telegram chat.
+
+You send a message. AI agents research the market, generate ideas, write specs, design the UI, scaffold a Next.js project, implement the code, run QA, and deploy to Vercel. You get back a live URL.
+
+## How It Works
+
+AppFactory is an OpenClaw skill that acts as a router, dispatching commands to a pipeline of 10 specialized sub-agents. Each agent handles one stage of the app lifecycle, runs in its own ephemeral context, and hands off structured JSON to the next.
+
+```
+You (Telegram)
+  │
+  ▼
+OpenClaw ──► AppFactory Router
+                 │
+                 ├── ideas ──► Researcher ──► Scout ──► Ranker ──► filtered ideas
+                 │
+                 ├── spec N ──► PM ──► detailed build spec
+                 │
+                 ├── design N ──► Designer ──► design system
+                 │
+                 └── approve N ──► Builder ──► Developer ──► QA ──► Deployer
+                                                                       │
+                                                                   live URL
+```
+
+The `auto` command runs this entire pipeline end-to-end in one shot.
+
+### The Pipeline
+
+| Stage | Agent | What it does |
+|-------|-------|-------------|
+| **Research** | Researcher | Searches the web for market signals, trends, and pain points |
+| **Ideate** | Scout | Generates 5 app ideas grounded in research |
+| **Rank** | Ranker | Scores ideas on pain, feasibility, virality — filters out weak ones (< 5.0) |
+| **Spec** | PM | Writes a full build spec: pages, components, API routes, DB schema |
+| **Design** | Designer | Creates a design system: colors, typography, components, motion |
+| **Build** | Builder | Scaffolds a Next.js project on GitHub with stub files |
+| **Develop** | Developer | Implements all stub code into a working app |
+| **QA** | QA | Validates the build — pass or fail (auto-retries develop→QA up to 2x) |
+| **Deploy** | Deployer | Ships to Vercel + Supabase, returns the live URL |
+| **Inspo** | Inspo | Analyzes YouTube videos via Gemini API for design/product inspiration |
+
+### Commands
+
+```
+ideas              Generate 5 app ideas from current market trends
+ideas <topic>      Same, focused on a topic
+refine N "text"    Iterate on idea #N with your feedback
+rank               Re-score all active ideas
+spec N             Write a build spec for idea #N
+design N           Create a design system for idea #N
+approve N          Auto-chain: build → develop → QA → deploy (done = live URL)
+auto [topic]       Full pipeline in one command: ideas → spec → design → approve → deploy
+kill N             Remove an idea
+```
+
+Manual re-triggers if a step fails: `build N`, `develop N`, `qa N`, `deploy N`
+
+### State Flow
+
+All state lives in a single `pipeline.json` file:
+
+```
+active → specced → designed → building → built → developed → qa_pass → deployed
+                                                            → qa_fail (retries 2x)
+```
+
+---
+
+## Infrastructure
+
+| Component | What |
+|-----------|------|
+| **Server** | Hetzner CX22 (2 vCPU, 4GB RAM, ~$4.50/mo) |
+| **Domain** | `eitan-openclaw.duckdns.org` (free dynamic DNS) |
+| **Proxy** | Caddy (auto-HTTPS via Let's Encrypt) |
+| **Gateway** | OpenClaw container (agent orchestration) |
+| **Deploys** | GitHub Actions auto-deploy on push to `main` |
+
+### Docker Services
+
+| Service | Image | Purpose |
+|---------|-------|---------|
+| `caddy` | `caddy:2-alpine` | Reverse proxy with automatic TLS |
+| `openclaw` | `openclaw/openclaw:latest` | Agent gateway (not exposed to host network) |
+| `duckdns` | `linuxserver/duckdns` | Updates DuckDNS IP every 5 minutes |
+
+---
 
 ## Quick Start
 
@@ -11,34 +98,27 @@ cd appfactory
 ./scripts/bootstrap.sh
 ```
 
-The bootstrap script handles everything: Docker installation, firewall, GitHub CLI, secrets collection, DuckDNS auto-update, and stack launch.
+The bootstrap script handles everything: Docker, firewall, GitHub CLI, secrets, DuckDNS, and stack launch.
 
----
-
-## Prerequisites
-
-Before running bootstrap, you need these accounts and keys ready:
+### Prerequisites
 
 | What | Where to get it |
 |------|----------------|
-| Hetzner VPS (CX22) | [console.hetzner.cloud](https://console.hetzner.cloud) -- Ubuntu 24.04, Ashburn datacenter |
-| DuckDNS subdomain | Already set up: `eitan-openclaw.duckdns.org`. Log in via GitHub at [duckdns.org](https://www.duckdns.org); token is on the dashboard |
-| Telegram bot token | From `@BotFather` for `@OpenclawAppFactoryBot` |
-| Anthropic API key | [console.anthropic.com](https://console.anthropic.com) -> API Keys |
+| Hetzner VPS (CX22) | [console.hetzner.cloud](https://console.hetzner.cloud) — Ubuntu 24.04 |
+| DuckDNS subdomain | [duckdns.org](https://www.duckdns.org) |
+| Telegram bot token | `@BotFather` on Telegram |
+| Anthropic API key | [console.anthropic.com](https://console.anthropic.com) |
 | OpenAI API key | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-| GitHub PAT | [github.com/settings/tokens](https://github.com/settings/tokens) -- classic token with `repo` scope |
+| GitHub PAT | [github.com/settings/tokens](https://github.com/settings/tokens) — classic token with `repo` scope |
 
-## Storing Secrets in GitHub (One-Time)
-
-Store your secrets in GitHub so you always know where they are. From your laptop:
+### Storing Secrets in GitHub (One-Time)
 
 ```bash
-# Non-sensitive config (readable, pulled automatically by bootstrap)
+# Non-sensitive config
 gh variable set DOMAIN --body "eitan-openclaw.duckdns.org" --repo eitandooreckaloni/appfactory
 gh variable set DUCKDNS_SUBDOMAIN --body "eitan-openclaw" --repo eitandooreckaloni/appfactory
 
-# Secrets (write-only backup -- you'll paste these during bootstrap)
-# Note: GitHub reserves GITHUB_* for Actions; use OPENCLAW_GH_PAT for the PAT
+# Secrets (write-only backup — paste these during bootstrap)
 gh secret set ANTHROPIC_API_KEY --repo eitandooreckaloni/appfactory
 gh secret set OPENAI_API_KEY --repo eitandooreckaloni/appfactory
 gh secret set TELEGRAM_BOT_TOKEN --repo eitandooreckaloni/appfactory
@@ -46,136 +126,48 @@ gh secret set OPENCLAW_GH_PAT --repo eitandooreckaloni/appfactory
 gh secret set DUCKDNS_TOKEN --repo eitandooreckaloni/appfactory
 ```
 
-GitHub secrets are write-only (can't be read back via API), so during bootstrap the script prompts you to paste each one. They're stored in GitHub as your single source of truth. The GitHub PAT is stored as `OPENCLAW_GH_PAT` because GitHub reserves `GITHUB_*` names for Actions.
-
----
-
-## What Bootstrap Does
-
-The `scripts/bootstrap.sh` script runs these 15 steps:
+### What Bootstrap Does
 
 1. Updates system packages
 2. Creates a `deploy` user (if running as root)
 3. Configures UFW firewall (ports 22, 80, 443 only)
-4. Installs Docker
-5. Installs GitHub CLI
-6. Authenticates with GitHub (`gh auth login`)
-7. Pulls `DOMAIN` and `DUCKDNS_SUBDOMAIN` from GitHub repo variables
-8. Prompts you to paste each secret (Anthropic, OpenAI, Telegram, GitHub PAT, DuckDNS)
-9. Generates a 256-bit OpenClaw auth token
-10. Writes the `.env` file (chmod 600)
-11. Pulls Docker images
-12. Starts the stack (`docker compose up -d`)
-13. Waits for OpenClaw health check, then installs skills
-14. Verifies public HTTPS access
-15. Prints success message with next steps
+4. Installs Docker and GitHub CLI
+5. Authenticates with GitHub
+6. Pulls config variables from repo
+7. Prompts for each secret (Anthropic, OpenAI, Telegram, GitHub PAT, DuckDNS)
+8. Generates a 256-bit OpenClaw auth token
+9. Writes `.env` (chmod 600)
+10. Pulls Docker images and starts the stack
+11. Installs skills and verifies HTTPS access
 
 ---
 
-## Architecture
+## Operations
 
-```
-You (Telegram) ──► @OpenclawAppFactoryBot
-                        │
-                        ▼
-              Telegram Bot API
-                        │
-                        ▼ (webhook)
-              Caddy (auto-HTTPS)
-              eitan-openclaw.duckdns.org
-                        │
-                        ▼ (reverse proxy)
-              OpenClaw Container
-               ├── Anthropic (Claude)
-               ├── OpenAI (GPT-4o)
-               ├── Agent Orchestrator
-               └── AppFactory Skill
-                        │
-                        ▼
-              Generated App ──► GitHub Repo
-```
-
-### Docker Services
-
-| Service | Image | Purpose |
-|---------|-------|---------|
-| `caddy` | `caddy:2-alpine` | Reverse proxy, auto-HTTPS via Let's Encrypt |
-| `openclaw` | `openclaw/openclaw:latest` | Agent gateway (not exposed to host network) |
-| `duckdns` | `linuxserver/duckdns` | Updates DuckDNS IP every 5 minutes |
-
----
-
-## Three Workflows
-
-### 1. First Deploy
+### Deploy / Migrate / Update
 
 ```bash
-ssh root@HETZNER_IP
+# First deploy or migrate to new server
+ssh root@SERVER_IP
 git clone https://github.com/eitandooreckaloni/appfactory.git appfactory
-cd appfactory
-./scripts/bootstrap.sh
-```
+cd appfactory && ./scripts/bootstrap.sh
 
-### 2. Migrate to a New Server
-
-```bash
-# On the NEW server:
-ssh root@NEW_SERVER_IP
-git clone https://github.com/eitandooreckaloni/appfactory.git appfactory
-cd appfactory
-./scripts/bootstrap.sh
-```
-
-DuckDNS auto-updates the IP. If you need workspace data from the old server:
-
-```bash
-# On OLD server:
-./scripts/backup.sh
-scp openclaw-backup-*.tar.gz root@NEW_SERVER_IP:~/appfactory/
-
-# On NEW server:
-# (restore instructions printed by backup.sh)
-```
-
-### 3. Daily Use
-
-- Message `@OpenclawAppFactoryBot` on Telegram with a command like `ideas`
-- OpenClaw orchestrates sub-agents to build it
-- Check `github.com/eitandooreckaloni/<app-name>` for the result
-- Run `./scripts/deploy.sh` to pull updates
-- Run `./scripts/backup.sh` to snapshot your data
-
----
-
-## Useful Commands
-
-```bash
-# View logs
-docker compose logs -f              # all services
-docker compose logs -f openclaw     # OpenClaw only
-docker compose logs -f caddy        # Caddy only
-
-# Restart
-docker compose restart              # restart all
-docker compose restart openclaw     # restart OpenClaw only
-
-# Stop everything
-docker compose down
-
-# Start everything
-docker compose up -d
-
-# Check status
-docker compose ps
-
-# Update and redeploy
+# Pull updates and restart
 ./scripts/deploy.sh
 
-# Backup
+# Backup workspace data
 ./scripts/backup.sh
+```
 
-# Install additional skills
-docker compose exec openclaw npx playbooks add skill <author/repo> --skill <skill-name>
+### Useful Commands
+
+```bash
+docker compose logs -f              # all logs
+docker compose logs -f openclaw     # OpenClaw only
+docker compose restart              # restart all
+docker compose ps                   # check status
+./scripts/deploy.sh                 # update and redeploy
+./scripts/backup.sh                 # snapshot data
 ```
 
 ---
@@ -184,73 +176,52 @@ docker compose exec openclaw npx playbooks add skill <author/repo> --skill <skil
 
 ```
 appfactory/
-├── docker-compose.yml            # Stack definition
-├── .env.example                  # Env var template (committed)
-├── .env                          # Actual secrets (git-ignored, generated by bootstrap)
-├── .gitignore
-├── caddy/
-│   └── Caddyfile                 # Reverse proxy config
+├── docker-compose.yml               # Stack definition
+├── .env.example                     # Env var template
+├── caddy/Caddyfile                  # Reverse proxy config
 ├── openclaw/
-│   ├── config/
-│   │   └── gateway.yaml          # OpenClaw gateway configuration
-│   └── skills/
-│       └── appfactory/
-│           └── SKILL.md          # Custom AppFactory orchestration skill
+│   ├── config/gateway.yaml          # OpenClaw gateway config
+│   └── skills/appfactory/
+│       ├── SKILL.md                 # Router agent (the brain)
+│       ├── README.md                # Detailed skill docs
+│       ├── agents/*/SKILL.md        # Sub-agent prompts (10 agents)
+│       ├── schemas/*.schema.json    # JSON schemas for agent outputs
+│       └── prompts/*.md             # Shared prompt fragments
 ├── scripts/
-│   ├── bootstrap.sh              # One-command server setup
-│   ├── deploy.sh                 # Pull updates and restart
-│   ├── backup.sh                 # Backup data and workspace
-│   └── install-skills.sh         # Install OpenClaw community skills
-└── README.md                     # This file
+│   ├── bootstrap.sh                 # One-command server setup
+│   ├── deploy.sh                    # Pull updates and restart
+│   ├── backup.sh                    # Backup data
+│   └── install-skills.sh            # Install community skills
+└── .github/workflows/deploy.yml     # CI/CD auto-deploy
 ```
 
 ---
 
 ## Security
 
-- **HTTPS**: Caddy handles TLS automatically via Let's Encrypt
-- **Firewall**: UFW allows only ports 22 (SSH), 80 (HTTP redirect), 443 (HTTPS)
-- **Auth token**: 256-bit random token required for OpenClaw API access
-- **mDNS disabled**: Network discovery turned off in gateway config
+- **HTTPS**: Automatic TLS via Caddy + Let's Encrypt
+- **Firewall**: UFW allows only ports 22, 80, 443
+- **Auth token**: 256-bit random token for OpenClaw API access
 - **No Docker socket**: OpenClaw container cannot control Docker
-- **Read-only mounts**: Config and skills directories are mounted read-only
-- **Security headers**: HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy
+- **Read-only mounts**: Config and skills directories mounted read-only
 - **Non-root**: Stack runs under the `deploy` user
-- **.env protection**: File permissions set to 600 (owner-only read/write)
-
----
-
-## Monthly Cost
-
-| Item | Cost |
-|------|------|
-| Hetzner CX22 (2 vCPU, 4GB RAM) | ~$4.50/mo |
-| DuckDNS | Free |
-| LLM API usage | ~$20-25/mo (depends on usage) |
-| **Total** | **~$25-30/mo** |
+- **.env protection**: File permissions set to 600
 
 ---
 
 ## Troubleshooting
 
-**Bootstrap fails at Docker install:**
-Make sure you're on Ubuntu 22.04+ or Debian 12+. The Docker install script doesn't support all distros.
+**Can't reach the server:**
+- Check DuckDNS dashboard for correct IP
+- `docker compose logs caddy` for TLS errors
+- Let's Encrypt rate limits if redeployed many times
 
-**Can't reach https://eitan-openclaw.duckdns.org:**
-- Check DuckDNS dashboard -- is the IP correct?
-- Run `docker compose logs caddy` -- look for TLS errors
-- Let's Encrypt rate limits: if you've redeployed many times, you may need to wait
-
-**OpenClaw health check fails:**
-- `docker compose logs openclaw` -- check for startup errors
-- Verify `.env` has all required variables: `cat .env | grep -c =` should return 9
-- Make sure API keys are valid
+**OpenClaw won't start:**
+- `docker compose logs openclaw` for startup errors
+- Verify `.env` has all required variables
+- Confirm API keys are valid
 
 **Telegram bot doesn't respond:**
-- Check the bot token: `curl https://api.telegram.org/bot<TOKEN>/getMe`
+- Verify bot token: `curl https://api.telegram.org/bot<TOKEN>/getMe`
 - Check webhook: `docker compose logs openclaw | grep -i telegram`
-- Make sure HTTPS is working (webhook requires valid TLS)
-
-**Skills fail to install:**
-- Network issue: `docker compose exec openclaw ping google.com`
-- Run manually: `docker compose exec openclaw npx playbooks add skill openclaw/skills --skill agent-orchestrator`
+- HTTPS must be working (webhooks require valid TLS)
