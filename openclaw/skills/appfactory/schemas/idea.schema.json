@@ -84,7 +84,7 @@
     },
     "status": {
       "type": "string",
-      "enum": ["active", "filtered", "specced", "approved", "building", "built", "killed", "superseded"],
+      "enum": ["scouted", "filtered", "ranked", "specced", "designed", "scaffolded", "developed", "qa_pass", "qa_fail", "deployed", "deployed_pending_db", "killed", "superseded"],
       "description": "Current pipeline status"
     },
     "refined_from": {

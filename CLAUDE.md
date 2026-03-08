@@ -26,14 +26,14 @@ ideas [topic]  -->  spec N  -->  design N  -->  approve N
 
 | Command | Agents | Status Transition |
 |---------|--------|-------------------|
-| `ideas [topic]` | [Inspo if YouTube URLs] -> Researcher -> [Inspo for YT refs] -> Scout -> Ranker (auto-filter >= 5.0) | -> `active` or `filtered` |
-| `refine N "feedback"` | Scout (refine) -> Ranker | original -> `superseded`, new -> `active`/`filtered` |
-| `rank` | Ranker | (re-scores active ideas) |
-| `spec N` | PM | `active` -> `specced` |
+| `ideas [topic]` | [Inspo if YouTube URLs] -> Researcher -> [Inspo for YT refs] -> Scout -> Ranker (auto-filter >= 5.0) | -> `ranked` or `filtered` |
+| `refine N "feedback"` | Scout (refine) -> Ranker | original -> `superseded`, new -> `ranked`/`filtered` |
+| `rank` | Ranker | (re-scores scouted/ranked ideas) |
+| `spec N` | PM | `ranked` -> `specced` |
 | `design N` | Designer | `specced` -> `designed` |
-| `approve N` | Builder -> Developer -> QA -> Deployer (auto-chain) | `designed` -> `building` -> `built` -> `developed` -> `qa_pass` -> `deployed` (or `qa_fail`) |
-| `build N` | Builder (manual re-trigger) | `designed`/`building` -> `built` |
-| `develop N` | Developer (manual re-trigger) | `built` -> `developed` |
+| `approve N` | Builder -> Developer -> QA -> Deployer (auto-chain) | `designed` -> `scaffolded` -> `developed` -> `qa_pass` -> `deployed` (or `qa_fail`) |
+| `build N` | Builder (manual re-trigger) | `designed` -> `scaffolded` |
+| `develop N` | Developer (manual re-trigger) | `scaffolded` -> `developed` |
 | `qa N` | QA (manual re-trigger) | `developed` -> `qa_pass`/`qa_fail` |
 | `deploy N` | Deployer (manual fallback/redeploy) | `qa_pass` -> `deployed` |
 | `inspo "url"` | Inspo (Gemini API) | saves to `inspirations/` |
@@ -44,8 +44,8 @@ ideas [topic]  -->  spec N  -->  design N  -->  approve N
 ### Status Flow
 
 ```
-active -> specced -> designed -> building -> built -> developed -> qa_pass -> deployed
-                                                                -> qa_fail
+scouted -> ranked -> specced -> designed -> scaffolded -> developed -> qa_pass -> deployed
+                                                                   -> qa_fail
 ```
 
 ### Sub-Agents (10 total)
@@ -111,5 +111,5 @@ The openclaw container gets all vars via `env_file: .env` in docker-compose.yml.
 - **Router stays lean**: SKILL.md is a thin command dispatcher, never generates content itself
 - **Sub-agents are ephemeral**: Spun up per command, torn down after — keeps context small
 - **All state in pipeline.json**: Single source of truth, only the router reads/writes it
-- **Auto-validation gate**: Ideas must score >= 5.0 to stay `active`
+- **Auto-validation gate**: Ideas must score >= 5.0 to become `ranked`
 - **Fail-fast chaining**: If any step in `approve` or `auto` fails, stop immediately and report

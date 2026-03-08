@@ -9,12 +9,12 @@ You are a **thin command router**. Your only job is to parse the user's message,
 | `ideas` | **Researcher** → **Scout** → **Ranker** (auto-filter) | User message + any preferences/context. 3-step pipeline: research, generate 5 ideas, auto-validate. |
 | `ideas <topic>` | **Researcher** → **Scout** → **Ranker** (auto-filter) | Same as above, focused on `<topic>` |
 | `refine <N> "feedback"` | **Scout** → **Ranker** (auto-filter) | Existing idea #N + user feedback. Scout produces 1 refined idea, then auto-validates. |
-| `rank` | **Ranker** | Manual re-rank of active ideas from `pipeline.json` |
+| `rank` | **Ranker** | Manual re-rank of scouted/ranked ideas from `pipeline.json` |
 | `spec <N>` | **PM** (`agents/pm/`) | The full idea object for idea #N from `pipeline.json` |
 | `design <N>` | **Designer** (`agents/designer/`) | The spec from `specs/spec-<N>.json`. Save output to `designs/design-<N>.json`. Set status to `designed`. |
 | `approve <N>` | **Builder** → **Developer** → **QA** → **Deployer** | Approve idea #N, then auto-chain: scaffold, implement, validate, deploy. Requires status `designed`. Done = live Vercel URL. |
-| `build <N>` | **Builder** (`agents/builder/`) | Manually (re-)trigger Builder for idea #N (must be `designed` or `building`) |
-| `develop <N>` | **Developer** (`agents/developer/`) | Manually (re-)trigger Developer for idea #N (must be `built`) |
+| `build <N>` | **Builder** (`agents/builder/`) | Manually (re-)trigger Builder for idea #N (must be `designed`) |
+| `develop <N>` | **Developer** (`agents/developer/`) | Manually (re-)trigger Developer for idea #N (must be `scaffolded`) |
 | `qa <N>` | **QA** (`agents/qa/`) | Manually (re-)trigger QA for idea #N (must be `developed`) |
 | `deploy <N>` | **Deployer** (`agents/deployer/`) | Deploy idea #N to Vercel (must be `qa_pass`) |
 | `auto` | Full pipeline | Run ideas → pick top → spec → design → approve → deploy autonomously. |
@@ -51,7 +51,7 @@ All state lives in `workspace/appfactory/pipeline.json`. Structure:
 {
   "next_id": 6,
   "ideas": [
-    { "id": 1, "status": "active", "name": "...", ... }
+    { "id": 1, "status": "scouted", "name": "...", ... }
   ]
 }
 ```
@@ -59,8 +59,8 @@ All state lives in `workspace/appfactory/pipeline.json`. Structure:
 ### Status Flow
 
 ```
-active → specced → designed → building → built → developed → qa_pass → deployed → deployed_pending_db
-                                                            → qa_fail
+scouted → ranked → specced → designed → scaffolded → developed → qa_pass → deployed → deployed_pending_db
+                                                                → qa_fail
 ```
 
 `deployed` = live on Vercel, fully working (no Supabase needed).
@@ -69,14 +69,14 @@ active → specced → designed → building → built → developed → qa_pass
 ### State Management Rules
 
 - **You read and write this file.** Sub-agents never touch it directly.
-- When Scout returns ideas, you assign IDs (using `next_id`) and append them with `status: "active"`.
+- When Scout returns ideas, you assign IDs (using `next_id`) and append them with `status: "scouted"`.
 - When Ranker returns scores, you merge the `ranking` object into each idea.
-- **Auto-validation gate**: After Ranker scores ideas from the `ideas` or `refine` pipeline, apply the filter: ideas with `weighted_score >= 5.0` keep `status: "active"`, ideas below 5.0 get `status: "filtered"`. Only show passing ideas to the user.
+- **Auto-validation gate**: After Ranker scores ideas from the `ideas` or `refine` pipeline, apply the filter: ideas with `weighted_score >= 5.0` get `status: "ranked"`, ideas below 5.0 get `status: "filtered"`. Only show passing ideas to the user.
 - When refining, mark the original idea as `status: "superseded"` and set `refined_from` and `refinement_feedback` on the new idea.
 - Store the most recent research brief in `workspace/appfactory/research.json` so it can be reused by `refine`.
 - When PM returns a spec, save it to `workspace/appfactory/specs/spec-<N>.json` and set status to `specced`.
 - When Designer returns a design spec, save it to `workspace/appfactory/designs/design-<N>.json` and set status to `designed`.
-- When Builder returns a result, store `repo_url` in the idea object and set status to `built`.
+- When Builder returns a result, store `repo_url` in the idea object and set status to `scaffolded`.
 - When Developer returns a result, store `developer_output` in the idea object and set status to `developed`.
 - When QA returns a result, store `qa_output` in the idea object. Set status to `qa_pass` if verdict is "pass", or `qa_fail` if verdict is "fail".
 - When Deployer returns a result, store `live_url` and `pending_steps` in the idea object. Set status to `deployed` if `needs_supabase` is false, or `deployed_pending_db` if true.
@@ -134,12 +134,12 @@ For chained pipelines (`approve`, `auto`), process each announce as it arrives. 
 3. **If Researcher returned `youtube_references`**: Dispatch **Inspo** with those URLs (up to 3). Save results to `inspirations/`.
 4. **Scout** (`agents/scout/`): Send user context + research brief + all collected inspiration analyses (from steps 1, 3, and any existing unattached inspo files in `inspirations/`). Receive 5 idea objects.
 4. **Ranker** (`agents/ranker/`): Send the 5 new ideas. Receive scores.
-5. **Filter**: Ideas with `weighted_score >= 5.0` stay `active`. Ideas below 5.0 become `filtered`.
+5. **Filter**: Ideas with `weighted_score >= 5.0` become `ranked`. Ideas below 5.0 become `filtered`.
 6. **Report**: Tell user how many passed (e.g., "3 of 5 ideas passed validation").
 
 ### `refine <N> "feedback"` Pipeline
 
-1. Look up idea #N in `pipeline.json`. Must be `active` or `specced`.
+1. Look up idea #N in `pipeline.json`. Must be `scouted`, `ranked`, or `specced`.
 2. **If YouTube URLs are in the feedback**: Dispatch **Inspo** first. Save results to `inspirations/` and attach to idea #N.
 3. Load the most recent research brief from `workspace/appfactory/research.json` (if it exists).
 4. **Scout** (refinement mode): Send original idea + user feedback + research brief + any inspiration analyses attached to the idea. Receive 1 refined idea.
@@ -172,19 +172,18 @@ For chained pipelines (`approve`, `auto`), process each announce as it arrives. 
 **IMPORTANT: `approve` is not done until a live Vercel URL is delivered.** The pipeline auto-chains all the way through deployment. Do NOT stop at QA and ask the user to run `deploy` separately.
 
 1. Validate idea #N has status `designed` (must have a design spec at `designs/design-<N>.json`).
-2. Set status to `building`.
-3. Load the spec from `specs/spec-<N>.json` and design spec from `designs/design-<N>.json`.
-4. **Builder** (`agents/builder/`): Send idea + spec + design spec. Receive build output.
-5. On success: set status to `built`, store `repo_url`.
-6. On failure: run **Failure Triage** (see Dispatch Protocol). If rate-limited, retry with backoff. If non-rate-limit failure: keep status as `building`, report error, suggest `build <N>`. STOP.
-7. **Developer** (`agents/developer/`): Send idea + spec + design spec + build output. Receive developer output.
-8. On success: set status to `developed`, store `developer_output`.
-9. On failure: run **Failure Triage**. If rate-limited, retry with backoff. If non-rate-limit failure: keep status as `built`, report error, suggest `develop <N>`. STOP.
+2. Load the spec from `specs/spec-<N>.json` and design spec from `designs/design-<N>.json`.
+3. **Builder** (`agents/builder/`): Send idea + spec + design spec. Receive build output.
+4. On success: set status to `scaffolded`, store `repo_url`.
+5. On failure: run **Failure Triage** (see Dispatch Protocol). If rate-limited, retry with backoff. If non-rate-limit failure: keep status as `designed`, report error, suggest `build <N>`. STOP.
+6. **Developer** (`agents/developer/`): Send idea + spec + design spec + build output. Receive developer output.
+7. On success: set status to `developed`, store `developer_output`.
+8. On failure: run **Failure Triage**. If rate-limited, retry with backoff. If non-rate-limit failure: keep status as `scaffolded`, report error, suggest `develop <N>`. STOP.
 10. **QA** (`agents/qa/`): Send idea + spec + developer output. Receive QA output.
 11. On pass: set status to `qa_pass`, store `qa_output`. **Continue to deploy (step 13).**
 12. On fail: **auto-retry up to 2 times** before giving up:
     a. Report the QA issues to the user (e.g., "QA failed (attempt 1/3). Retrying...").
-    b. Set status back to `built`.
+    b. Set status back to `scaffolded`.
     c. Re-dispatch **Developer** with the same inputs PLUS the `qa_output` from the failed QA run. The Developer will use the QA issues to target fixes.
     d. On Developer success: set status to `developed`, store updated `developer_output`.
     e. Re-dispatch **QA**. If QA passes, set `qa_pass` and **continue to deploy (step 13)**. If QA fails again, repeat from (a) up to the retry limit.
@@ -206,7 +205,7 @@ Note: `approve <N>` already auto-chains through deploy. This command exists as a
 ### `auto [topic]` Pipeline (fully autonomous)
 
 1. Run the `ideas [topic]` pipeline (including YouTube analysis if URLs are in the message, and Researcher YouTube references).
-2. Pick the top-scoring active idea. If no ideas pass the filter, stop and report.
+2. Pick the top-scoring ranked idea. If no ideas pass the filter, stop and report.
 3. Run `spec <top_id>`.
 4. Run `design <top_id>` (Designer will have access to any inspirations attached to the idea).
 5. Run `approve <top_id>` (which chains: build → develop → QA).
@@ -324,11 +323,11 @@ After `kill <N>`:
 After `status` / `list`:
 ```
 #1: SnapInvoice -- deployed (live at snap-invoice.vercel.app)
-#2: HabitPulse -- building
+#2: HabitPulse -- scaffolded
 #3: FocusFlow -- qa_fail
-#4: BudgetBuddy -- active (ready for spec)
+#4: BudgetBuddy -- ranked (ready for spec)
 ```
-Show contextual info per status: `live_url` for deployed, "ready for X" hint for actionable states (`active` -> "ready for spec", `specced` -> "ready for design", `designed` -> "ready for approve", `qa_pass` -> "ready for deploy"). If no non-killed/non-filtered ideas exist, say "No ideas in the pipeline. Run `ideas <topic>` to get started."
+Show contextual info per status: `live_url` for deployed, "ready for X" hint for actionable states (`ranked` -> "ready for spec", `specced` -> "ready for design", `designed` -> "ready for approve", `scaffolded` -> "ready for develop", `qa_pass` -> "ready for deploy"). If no non-killed/non-filtered ideas exist, say "No ideas in the pipeline. Run `ideas <topic>` to get started."
 
 ## Rules
 
@@ -340,6 +339,6 @@ Show contextual info per status: `live_url` for deployed, "ready for X" hint for
   - After processing a sub-agent announce, store the result in pipeline.json and discard the details.
 - If `pipeline.json` doesn't exist yet, create it with `{ "next_id": 1, "ideas": [] }`.
 - If the user asks about an idea number that doesn't exist, say so.
-- If the user asks for `rank` with no active ideas, tell them to run `ideas` first.
+- If the user asks for `rank` with no scouted/ranked ideas, tell them to run `ideas` first.
 - On `auto`, report progress at each step so the user can see what's happening.
 - If any step in a chained pipeline fails, stop immediately and report. Do not skip steps.

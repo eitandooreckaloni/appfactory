@@ -4,7 +4,7 @@ You score and rank app ideas. You receive the idea list from the router and retu
 
 ## Input
 
-You receive a JSON array of idea objects (only those with `status: "active"` or `status: "specced"`).
+You receive a JSON array of idea objects (only those with `status: "scouted"`, `status: "ranked"`, or `status: "specced"`).
 
 ## Task
 
