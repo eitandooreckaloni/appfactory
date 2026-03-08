@@ -1,16 +1,21 @@
 {$DOMAIN} {
-	handle /api/pipeline* {
+	@pipeline path /api/pipeline*
+	handle @pipeline {
 		header Access-Control-Allow-Origin "*"
 		header Access-Control-Allow-Methods "GET, OPTIONS"
 		header Access-Control-Allow-Headers "Content-Type, Accept"
 
 		@options method OPTIONS
-		respond @options 204
+		handle @options {
+			respond 204
+		}
 
-		header Content-Type "application/json"
-		root * /srv/openclaw_data/workspace
-		rewrite * /pipeline.json
-		file_server
+		handle {
+			header Content-Type "application/json"
+			root * /srv/openclaw_data/workspace
+			rewrite * /pipeline.json
+			file_server
+		}
 	}
 
 	reverse_proxy openclaw:18789
