@@ -35,7 +35,7 @@ info "Pulling latest images..."
 docker compose pull
 
 info "Restarting stack..."
-docker compose up -d --remove-orphans
+docker compose up -d --remove-orphans --force-recreate caddy
 
 info "Waiting for OpenClaw to be healthy..."
 RETRIES=20
