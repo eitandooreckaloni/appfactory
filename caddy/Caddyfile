@@ -3,7 +3,7 @@
 		header Access-Control-Allow-Origin "*"
 		header Access-Control-Allow-Methods "GET, OPTIONS"
 		header Content-Type "application/json"
-		root * /srv/workspace/appfactory
+		root * /srv/openclaw_data/workspace
 		rewrite * /pipeline.json
 		file_server
 	}

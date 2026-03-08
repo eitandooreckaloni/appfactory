@@ -11,6 +11,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - openclaw_workspace:/srv/workspace:ro
+      - openclaw_data:/srv/openclaw_data:ro
     environment:
       - DOMAIN=${DOMAIN}
     depends_on:
