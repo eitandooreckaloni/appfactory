@@ -104,13 +104,45 @@ After implementing all files:
 3. Maximum 3 build attempts
 4. On each retry, fix only the reported errors -- do not rewrite working files
 
-### 10. Commit & Push
+### 10. Continuous Git Pushes
 
-```bash
-git add -A
-git commit -m "feat: implement all pages, routes, and components"
-git push origin main
-```
+**Push after every major implementation phase.** This ensures progress is saved and survives crashes, rate limits, or timeouts. Do NOT wait until the end to push all changes at once.
+
+Push checkpoints (commit + push after each):
+
+1. **After Global Config** (steps 2): tailwind config, globals.css, layout.tsx
+   ```bash
+   git add -A && git commit -m "feat: apply design system config" && git push origin main
+   ```
+
+2. **After each page file** (step 3): commit + push after implementing each `app/*/page.tsx`
+   ```bash
+   git add -A && git commit -m "feat: implement <page-name> page" && git push origin main
+   ```
+
+3. **After API routes** (step 4): commit + push after implementing all API route handlers
+   ```bash
+   git add -A && git commit -m "feat: implement API routes" && git push origin main
+   ```
+
+4. **After components** (step 5): commit + push after implementing all components
+   ```bash
+   git add -A && git commit -m "feat: implement components" && git push origin main
+   ```
+
+5. **After lib files** (steps 6-7): Supabase client, external service clients, additional deps
+   ```bash
+   git add -A && git commit -m "feat: add lib clients and dependencies" && git push origin main
+   ```
+
+6. **After build fixes** (step 9): each round of build error fixes gets its own commit + push
+   ```bash
+   git add -A && git commit -m "fix: resolve build errors (attempt N)" && git push origin main
+   ```
+
+If any push fails due to a network error, retry up to 3 times with 2-second delays before giving up.
+
+**In QA retry mode**, push after each batch of issue fixes rather than all at once.
 
 ### 11. Cleanup
 

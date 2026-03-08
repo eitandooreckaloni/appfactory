@@ -120,18 +120,48 @@ Create ALL of the following files using the `write` tool or shell:
 - Tech stack (from `idea.stack`)
 - Setup instructions: clone, install, env vars, run migrations, dev server
 
-### 4. Push to GitHub
+### 4. Set Up Git Remote (immediately after init)
 
 ```bash
 cd /tmp/<kebab-name>
-git add -A
-git commit -m "feat: initial scaffold from AppFactory"
 git branch -M main
 git remote add origin https://github.com/$GITHUB_USER/<kebab-name>.git
-git push -u origin main
 ```
 
-### 5. Cleanup
+### 5. Continuous Git Pushes
+
+**Push after every meaningful batch of files.** This ensures progress is saved and survives crashes, rate limits, or timeouts. Do NOT wait until the end to push.
+
+Push checkpoints (commit + push after each):
+
+1. **After config files**: `package.json`, `next.config.js`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js`, `.env.example`, `README.md`
+   ```bash
+   git add -A && git commit -m "feat: add project config and setup files" && git push -u origin main
+   ```
+
+2. **After layout + globals**: `app/layout.tsx`, `app/globals.css`, `app/page.tsx`
+   ```bash
+   git add -A && git commit -m "feat: add root layout, globals, and landing page" && git push origin main
+   ```
+
+3. **After page stubs**: all `app/<route>/page.tsx` files
+   ```bash
+   git add -A && git commit -m "feat: add page stubs" && git push origin main
+   ```
+
+4. **After API route stubs**: all `app/api/*/route.ts` files
+   ```bash
+   git add -A && git commit -m "feat: add API route stubs" && git push origin main
+   ```
+
+5. **After components + lib**: all `components/*.tsx`, `lib/supabase.ts`, `schema.sql`
+   ```bash
+   git add -A && git commit -m "feat: add components, lib, and schema" && git push origin main
+   ```
+
+If any push fails due to a network error, retry up to 3 times with 2-second delays before giving up.
+
+### 6. Cleanup
 
 ```bash
 rm -rf /tmp/<kebab-name>
