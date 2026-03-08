@@ -16,7 +16,7 @@ OpenClaw  -->  AppFactory Router (SKILL.md)
                    |-- rank ----------> Ranker Agent   --> JSON scores
                    |-- spec N --------> PM Agent       --> JSON spec
                    |-- design N ------> Designer Agent --> JSON design spec
-                   |-- approve N -----> Builder --> Developer --> QA (auto-chain)
+                   |-- approve N -----> Builder --> Developer --> QA --> Deployer (auto-chain, done = live URL)
                    |-- build N -------> Builder Agent  --> GitHub repo scaffold
                    |-- develop N -----> Developer Agent --> implemented code
                    |-- qa N ----------> QA Agent       --> pass/fail verdict
@@ -39,11 +39,11 @@ refine <N> "text"  Iterate on idea #N with feedback, auto-validate
 rank               Manually re-rank all active ideas
 spec <number>      PM writes a full build spec for idea #N
 design <number>    Designer creates a design system for idea #N
-approve <number>   Approve #N, then auto-chain: scaffold → implement → QA (retries develop→QA up to 2x on failure)
+approve <number>   Approve #N, then auto-chain: scaffold → implement → QA → deploy (retries develop→QA up to 2x on failure). Done = live Vercel URL.
 build <number>     Manually (re-)trigger Builder for idea #N
 develop <number>   Manually (re-)trigger Developer for idea #N
 qa <number>        Manually (re-)trigger QA for idea #N
-deploy <number>    Deploy idea #N to Vercel
+deploy <number>    Deploy idea #N to Vercel (manual fallback -- approve auto-deploys)
 auto               Full autonomous pipeline: ideas → spec → design → build → develop → qa → deploy
 auto <topic>       Same as auto, focused on a topic
 kill <number>      Router removes idea #N
@@ -54,11 +54,12 @@ kill <number>      Router removes idea #N
 ```
                                    auto (runs everything below)
                                           |
-ideas  -->  [research → generate → rank → filter]  -->  spec  -->  design  -->  approve  -->  deploy
-                                              |           |          |             |             |
-                                              v           v          v             v             v
-                                       refine/kill      kill       kill    [build→develop⇄qa]  LIVE
-                                                                            (retry loop ×2)
+ideas  -->  [research → generate → rank → filter]  -->  spec  -->  design  -->  approve
+                                              |           |          |             |
+                                              v           v          v             v
+                                       refine/kill      kill       kill    [build→develop⇄qa→deploy]
+                                                                            (retry loop ×2)    |
+                                                                                           LIVE URL = DONE
 ```
 
 ## Pipeline Agents
@@ -82,11 +83,11 @@ ideas  -->  [research → generate → rank → filter]  -->  spec  -->  design 
 3. **rank** -- Router sends active ideas to Ranker. Ranker returns scores. Router merges `ranking` into each idea in `pipeline.json`.
 4. **spec N** -- Router sends idea #N to PM. PM returns full spec. Router saves to `specs/spec-N.json`, sets status to `specced`.
 5. **design N** -- Router sends the spec to Designer. Designer returns a design system. Router saves to `designs/design-N.json`, sets status to `designed`.
-6. **approve N** -- Router validates idea is `designed`, then auto-chains three agents: Builder scaffolds the repo, Developer implements all stubs, QA validates the result. If QA fails, the router automatically retries the develop→QA cycle up to 2 more times, feeding the QA failure output back to the Developer so it can make targeted fixes. After 3 total QA attempts, if still failing, status becomes `qa_fail`. Status progresses: `building` → `built` → `developed` → `qa_pass` (or `qa_fail`).
+6. **approve N** -- Router validates idea is `designed`, then auto-chains four agents: Builder scaffolds the repo, Developer implements all stubs, QA validates the result, and Deployer ships it to Vercel. If QA fails, the router automatically retries the develop→QA cycle up to 2 more times, feeding the QA failure output back to the Developer so it can make targeted fixes. After 3 total QA attempts, if still failing, status becomes `qa_fail`. On QA pass, the pipeline continues automatically to deploy -- **approve is only "done" when the live Vercel URL is delivered**. Status progresses: `building` → `built` → `developed` → `qa_pass` → `deployed` (or `qa_fail`).
 7. **build N** -- Manual re-trigger of Builder (e.g., if auto-build failed).
 8. **develop N** -- Manual re-trigger of Developer (e.g., if implementation had issues).
 9. **qa N** -- Manual re-trigger of QA.
-10. **deploy N** -- Router sends the QA-validated app to Deployer. Deployer creates a Vercel project, sets env vars, deploys, provisions Supabase, and runs a smoke test. Status becomes `deployed` with a `live_url`.
+10. **deploy N** -- Manual fallback/redeploy. Router sends the QA-validated app to Deployer. Deployer creates a Vercel project, sets env vars, deploys, and runs a smoke test. Status becomes `deployed` with a `live_url`. Note: `approve` already auto-deploys, so this is only needed if deploy fails during approve or for redeployment.
 11. **auto [topic]** -- Runs the entire pipeline autonomously: ideas → pick top → spec → design → approve (build → develop → QA) → deploy. Reports progress at each step. Stops on any failure.
 12. **kill N** -- Router sets status to `killed` in `pipeline.json`. No sub-agent needed.
 

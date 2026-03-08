@@ -15,9 +15,11 @@ An autonomous idea-to-deployment pipeline that ships small apps via Telegram. Us
 ## Pipeline (the "pipe")
 
 ```
-ideas [topic]  -->  spec N  -->  design N  -->  approve N  -->  deploy N
+ideas [topic]  -->  spec N  -->  design N  -->  approve N
                                                    |
-                                          [build -> develop -> qa]
+                                     [build -> develop -> qa -> deploy]
+                                                                  |
+                                                           live Vercel URL = DONE
 ```
 
 ### Full Command Set
@@ -29,11 +31,11 @@ ideas [topic]  -->  spec N  -->  design N  -->  approve N  -->  deploy N
 | `rank` | Ranker | (re-scores active ideas) |
 | `spec N` | PM | `active` -> `specced` |
 | `design N` | Designer | `specced` -> `designed` |
-| `approve N` | Builder -> Developer -> QA (auto-chain) | `designed` -> `building` -> `built` -> `developed` -> `qa_pass`/`qa_fail` |
+| `approve N` | Builder -> Developer -> QA -> Deployer (auto-chain) | `designed` -> `building` -> `built` -> `developed` -> `qa_pass` -> `deployed` (or `qa_fail`) |
 | `build N` | Builder (manual re-trigger) | `designed`/`building` -> `built` |
 | `develop N` | Developer (manual re-trigger) | `built` -> `developed` |
 | `qa N` | QA (manual re-trigger) | `developed` -> `qa_pass`/`qa_fail` |
-| `deploy N` | Deployer | `qa_pass` -> `deployed` |
+| `deploy N` | Deployer (manual fallback/redeploy) | `qa_pass` -> `deployed` |
 | `inspo "url"` | Inspo (Gemini API) | saves to `inspirations/` |
 | `inspo N "url"` | Inspo (Gemini API) | saves + attaches to idea #N |
 | `auto [topic]` | Full pipeline end-to-end | -> `deployed` |
