@@ -4,3 +4,7 @@ openclaw/workspace/
 *.tar.gz
 *.bak
 .DS_Store
+factory-floor/node_modules/
+factory-floor/.next/
+factory-floor/out/
+factory-floor/.vercel/

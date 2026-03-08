@@ -79,6 +79,10 @@ scripts/
   backup.sh                   # Snapshot data
   install-skills.sh           # Install OpenClaw community skills
 
+factory-floor/                # Pipeline dashboard (Next.js) — https://factory-floor-opal.vercel.app
+  src/app/page.tsx            # Main dashboard UI
+  src/app/components/         # UI components
+
 docker-compose.yml            # Stack definition (caddy, openclaw, duckdns)
 caddy/Caddyfile               # Reverse proxy config
 openclaw/config/gateway.yaml  # OpenClaw gateway config
