@@ -99,11 +99,33 @@ For each sub-agent dispatch:
 1. **Read** the sub-agent's SKILL.md from `{baseDir}/agents/<name>/SKILL.md`
 2. **Spawn** via `sessions_spawn` with `task` containing: the SKILL.md content + the relevant input data (idea object, spec, design spec, etc. as JSON)
 3. **Wait** for the announce -- the sub-agent will post its result back to this chat when done
-4. **Parse** the JSON result from the announce message
-5. **Update** `pipeline.json` with the result
-6. **Summarize** to the user in a short message (never echo the full result)
+4. **If the announce is a failure/error**: go to **Failure Triage** below
+5. **Parse** the JSON result from the announce message
+6. **Update** `pipeline.json` with the result
+7. **Summarize** to the user in a short message (never echo the full result)
 
 For chained pipelines (`approve`, `auto`), process each announce as it arrives. Check `pipeline.json` status to know what step comes next. Do not try to run the entire chain in one turn -- let each sub-agent announce back, then dispatch the next one.
+
+### Failure Triage (MUST follow on ANY subagent failure)
+
+**When a subagent fails or errors, NEVER immediately report failure to the user.** Always triage first:
+
+1. **Inspect the failure**: Call `sessions_list` to see the failed subagent's status and runtime.
+2. **Detect rate limits**: The failure is rate-limit related if ANY of these are true:
+   - The subagent's runtime was very short (under 60 seconds)
+   - The error message contains "rate limit", "429", "rate_limit_error", or "try again later"
+   - You yourself received 429 errors in recent turns (check your own conversation for error messages)
+   - The failure came immediately after a heavy operation (another subagent just finished)
+3. **If rate-limit related** — apply the **Rate Limit Retry Policy**:
+   - Tell the user: "Rate limit hit on <agent>. Waiting 2 min before retry (attempt 1/4)..."
+   - **Wait 2 full minutes** using `exec` with `sleep 120` (NOT shorter delays — the limit is per-minute, short retries will fail again)
+   - Re-dispatch the same sub-agent with identical inputs
+   - If it fails again: wait **5 minutes** (`sleep 300`), retry. Tell user: "Still rate-limited. Waiting 5 min (attempt 2/4)..."
+   - If it fails again: wait **10 minutes** (`sleep 600`), retry. Tell user: "Waiting 10 min (attempt 3/4)..."
+   - Only after **4 consecutive failures**, report the failure to the user and stop.
+4. **If NOT rate-limit related** — report the error and suggest the manual re-trigger command (e.g., `build N`).
+
+**Why this matters**: OpenClaw's built-in retry uses ~5-second intervals which are too short for per-minute API rate limits. All built-in retries fail. You MUST handle rate limits yourself with minute-scale delays.
 
 ### `ideas` Pipeline (3-step, optionally 4 with YouTube)
 
@@ -154,10 +176,10 @@ For chained pipelines (`approve`, `auto`), process each announce as it arrives. 
 3. Load the spec from `specs/spec-<N>.json` and design spec from `designs/design-<N>.json`.
 4. **Builder** (`agents/builder/`): Send idea + spec + design spec. Receive build output.
 5. On success: set status to `built`, store `repo_url`.
-6. On failure: keep status as `building`, report the error, suggest `build <N>` to retry. STOP.
+6. On failure: run **Failure Triage** (see Dispatch Protocol). If rate-limited, retry with backoff. If non-rate-limit failure: keep status as `building`, report error, suggest `build <N>`. STOP.
 7. **Developer** (`agents/developer/`): Send idea + spec + design spec + build output. Receive developer output.
 8. On success: set status to `developed`, store `developer_output`.
-9. On failure: keep status as `built`, report the error, suggest `develop <N>` to retry. STOP.
+9. On failure: run **Failure Triage**. If rate-limited, retry with backoff. If non-rate-limit failure: keep status as `built`, report error, suggest `develop <N>`. STOP.
 10. **QA** (`agents/qa/`): Send idea + spec + developer output. Receive QA output.
 11. On pass: set status to `qa_pass`, store `qa_output`. **Continue to deploy (step 13).**
 12. On fail: **auto-retry up to 2 times** before giving up:
@@ -169,7 +191,7 @@ For chained pipelines (`approve`, `auto`), process each announce as it arrives. 
     f. After 3 total QA attempts (1 initial + 2 retries), if still failing: set status to `qa_fail`, store `qa_output`, report issues. STOP.
 13. **Deployer** (`agents/deployer/`): Send idea + spec + QA output + repo URL. Receive deploy output.
 14. On success: set status to `deployed` (or `deployed_pending_db`), store `live_url` and `pending_steps`. **Report the live URL to the user -- this is the "done" signal.**
-15. On failure: keep status as `qa_pass`, report the error, suggest `deploy <N>` to retry. STOP.
+15. On failure: run **Failure Triage**. If rate-limited, retry with backoff. If non-rate-limit failure: keep status as `qa_pass`, report error, suggest `deploy <N>`. STOP.
 
 ### `deploy <N>` Pipeline (manual fallback -- approve auto-deploys)
 
@@ -307,20 +329,6 @@ After `status` / `list`:
 #4: BudgetBuddy -- active (ready for spec)
 ```
 Show contextual info per status: `live_url` for deployed, "ready for X" hint for actionable states (`active` -> "ready for spec", `specced` -> "ready for design", `designed` -> "ready for approve", `qa_pass` -> "ready for deploy"). If no non-killed/non-filtered ideas exist, say "No ideas in the pipeline. Run `ideas <topic>` to get started."
-
-## Rate Limit Retry Policy
-
-When a sub-agent fails with a rate limit error (message contains "rate limit", "429", or "try again later"):
-
-1. **Do NOT treat this as a pipeline failure.** Rate limits are temporary.
-2. **Wait 2 minutes**, then re-dispatch the same sub-agent with the same inputs.
-3. If it fails again, **wait 5 minutes** and retry once more.
-4. If the 3rd attempt also hits a rate limit, **wait 10 minutes** and try a final time.
-5. Only after 4 consecutive rate limit failures on the same step, report the failure and stop.
-
-Tell the user what's happening: "Rate limit hit on <agent>. Waiting 2 min before retry (attempt 2/4)..."
-
-This applies to ALL sub-agent dispatches in ALL pipelines (`auto`, `approve`, `ideas`, etc.).
 
 ## Rules
 
