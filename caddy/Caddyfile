@@ -2,6 +2,7 @@
 	handle /api/pipeline* {
 		header Access-Control-Allow-Origin "*"
 		header Access-Control-Allow-Methods "GET, OPTIONS"
+		header Access-Control-Allow-Headers "Content-Type, Accept"
 		header Content-Type "application/json"
 		root * /srv/openclaw_data/workspace
 		rewrite * /pipeline.json
